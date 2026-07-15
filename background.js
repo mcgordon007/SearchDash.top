@@ -656,6 +656,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+// ==================== External Message Handling ====================
+
+/**
+ * Handle messages from external web pages (searchdash.top)
+ * Used by success.html for auto-activation after Creem payment
+ */
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  // Only accept messages from our own website
+  if (!sender.url || !sender.url.startsWith('https://searchdash.top')) {
+    console.warn('Rejected external message from:', sender.url);
+    return;
+  }
+
+  (async () => {
+    try {
+      switch (message.type) {
+        case 'paymentSuccess': {
+          const { checkoutId, orderId, customerId, productId } = message;
+          const result = await handlePaymentSuccess({ checkoutId, orderId, customerId, productId });
+          sendResponse(result);
+          break;
+        }
+
+        default: {
+          sendResponse({ success: false, error: `Unknown message type: ${message.type}` });
+        }
+      }
+    } catch (error) {
+      console.error('Error handling external message:', error);
+      sendResponse({ success: false, error: error.message });
+    }
+  })();
+
+  return true;
+});
+
 // ==================== Lifecycle Events ====================
 
 /**
