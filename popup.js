@@ -118,14 +118,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Get selected text ─────────────────────────────────
   try {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (activeTab.id) {
+    // Only inject into http/https pages (not chrome://, extension pages, etc.)
+    if (activeTab.id && activeTab.url && /^https?:\/\//.test(activeTab.url)) {
       chrome.scripting.executeScript(
         {
           target: { tabId: activeTab.id },
           function: () => window.getSelection().toString().trim()
         },
         (results) => {
-          if (chrome.runtime.lastError) return;
+          if (chrome.runtime.lastError) {
+            console.warn('Could not get selected text:', chrome.runtime.lastError.message);
+            return;
+          }
           if (results && results[0] && results[0].result) {
             selectionTextEl.value = results[0].result;
           }
@@ -133,7 +137,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       );
     }
   } catch (error) {
-    console.warn('Failed to get selected text:', error);
+    console.warn('Failed to get selected text:', error?.message || error);
   }
 
   // ── Load and render engines ───────────────────────────
