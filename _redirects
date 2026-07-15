@@ -1,4 +1,0 @@
-# Cloudflare Pages — Redirects
-# Ensure clean URLs
-
-/success  /success.html  301
