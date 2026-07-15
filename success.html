@@ -116,18 +116,6 @@
       margin-top: 10px;
       line-height: 1.5;
     }
-    .debug {
-      margin-top: 24px;
-      padding: 12px;
-      background: #f8fafc;
-      border: 1px dashed #e2e8f0;
-      border-radius: 8px;
-      font-size: 11px;
-      font-family: monospace;
-      color: #94a3b8;
-      text-align: left;
-      word-break: break-all;
-    }
   </style>
 </head>
 <body>
@@ -151,8 +139,6 @@
       </div>
       <p class="hint" id="licenseHint"></p>
     </div>
-
-    <div class="debug" id="debugInfo"></div>
   </div>
 
   <script>
@@ -164,19 +150,9 @@
       var licenseKeyText = document.getElementById('licenseKeyText');
       var licenseHint = document.getElementById('licenseHint');
       var copyBtn = document.getElementById('copyBtn');
-      var debugEl = document.getElementById('debugInfo');
 
-      function log(msg) {
-        debugEl.textContent += msg + '\n';
-        console.log(msg);
-      }
-
-      // Parse ALL query params from Creem redirect
       var params = new URLSearchParams(window.location.search);
-      log('URL: ' + window.location.href);
-      log('All params: ' + window.location.search);
 
-      // Try multiple possible param names for checkout ID
       var checkoutId = params.get('checkout_id')
         || params.get('checkout')
         || params.get('checkoutId')
@@ -187,9 +163,6 @@
         || params.get('order')
         || params.get('orderId')
         || '';
-
-      log('checkoutId: ' + (checkoutId || '(none)'));
-      log('orderId: ' + (orderId || '(none)'));
 
       function showLicenseKey(key, isSuccess) {
         licenseKeyText.textContent = key;
@@ -231,19 +204,14 @@
         statusEl.className = 'status error';
         statusEl.textContent = 'Missing checkout information.';
         infoEl.innerHTML = 'The payment was successful but we could not identify your order. Please find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a> and activate it manually in the SearchDash extension.';
-        log('ERROR: No checkoutId found in URL params');
         return;
       }
 
       // NOTE: This ID changes after Chrome Web Store publishing. Update it then.
       var extensionId = 'mpjpfdlbhfcejfmaafccigkhcdfclfoi';
 
-      log('Extension ID: ' + extensionId);
-      log('Sending paymentSuccess message...');
-
       function tryActivate() {
         if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
-          log('chrome.runtime.sendMessage not available');
           statusEl.className = 'status success';
           statusEl.textContent = 'Payment confirmed!';
           infoEl.innerHTML = 'Open the SearchDash extension <strong>Purchase</strong> page and click "Check Payment" to activate.<br><br>Or find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
@@ -255,10 +223,7 @@
           checkoutId: checkoutId,
           orderId: orderId || undefined
         }, function(response) {
-          log('Response received: ' + JSON.stringify(response));
-
           if (chrome.runtime.lastError) {
-            log('Error: ' + chrome.runtime.lastError.message);
             statusEl.className = 'status error';
             statusEl.textContent = 'Could not reach the extension.';
             infoEl.innerHTML = 'Please open the SearchDash extension and activate your license manually.<br><br>Find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
@@ -273,8 +238,6 @@
               showLicenseKey(response.licenseKey, true);
             }
           } else {
-            var msg = (response && response.message) ? response.message : 'Activation failed.';
-            log('Activation failed: ' + msg);
             statusEl.className = 'status error';
             statusEl.textContent = 'Activation failed.';
             infoEl.textContent = 'Don\'t worry — you can still activate manually.';
