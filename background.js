@@ -682,8 +682,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case 'activateLicense': {
           const { licenseKey } = message;
-          const result = await activateLicense(licenseKey);
-          sendResponse(result);
+          // Verify the key with Creem (don't call /activate — it may be limited to 1 activation)
+          const verifyResult = await verifyLicenseKey(licenseKey);
+          if (verifyResult.valid) {
+            // Key is valid — save locally, Pro unlocked
+            await saveLicense({
+              key: licenseKey,
+              activated: true,
+              activatedAt: new Date().toISOString(),
+              planName: verifyResult.planName || 'Pro'
+            });
+            sendResponse({ success: true, licenseKey, message: 'License activated! Pro features unlocked.' });
+          } else {
+            sendResponse({ success: false, message: verifyResult.error || 'Invalid license key.' });
+          }
           break;
         }
 
