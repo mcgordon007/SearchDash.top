@@ -483,18 +483,31 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
 
   const licenseKey = entry.licenseKey;
 
-  // Activate the license key on Creem and save locally
-  const result = await activateLicense(licenseKey);
+  // Verify the license with Creem (it's already active after payment, no need to call /activate)
+  const verifyResult = await verifyLicenseKey(licenseKey);
 
-  if (result.success) {
+  if (verifyResult.valid) {
+    // Save locally — license is confirmed active on Creem's side
+    await saveLicense({
+      key: licenseKey,
+      activated: true,
+      activatedAt: new Date().toISOString(),
+      planName: verifyResult.planName || 'Pro'
+    });
+
     // Clean up the pending entry
     delete pending[checkoutId];
     await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
+
     return { success: true, licenseKey, message: 'License auto-activated! Pro features unlocked.' };
   }
 
-  // Activation failed, but still return the key so user can manually activate
-  return { success: false, licenseKey, message: result.message };
+  // Verification failed — still return the key so user can manually activate
+  return {
+    success: false,
+    licenseKey,
+    message: verifyResult.error || `License status: ${verifyResult.status}. Try activating manually in the Purchase page.`
+  };
 }
 
 // ==================== Message Handling ====================
