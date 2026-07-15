@@ -478,20 +478,23 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
 
   if (!entry || !entry.licenseKey) {
     console.warn('No pending license key found for checkout:', checkoutId);
-    return { success: false, message: 'License key not found. Please activate manually from the Creem Dashboard.' };
+    return { success: false, licenseKey: null, message: 'License key not found. Please activate manually from the Creem Dashboard.' };
   }
 
+  const licenseKey = entry.licenseKey;
+
   // Activate the license key on Creem and save locally
-  const result = await activateLicense(entry.licenseKey);
+  const result = await activateLicense(licenseKey);
 
   if (result.success) {
     // Clean up the pending entry
     delete pending[checkoutId];
     await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
-    return { success: true, message: 'License auto-activated! Pro features unlocked.' };
+    return { success: true, licenseKey, message: 'License auto-activated! Pro features unlocked.' };
   }
 
-  return result;
+  // Activation failed, but still return the key so user can manually activate
+  return { success: false, licenseKey, message: result.message };
 }
 
 // ==================== Message Handling ====================
