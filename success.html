@@ -60,7 +60,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* License Key Box */
     .license-box {
       display: none;
       background: #f0fdf4;
@@ -70,9 +69,7 @@
       margin-top: 8px;
       text-align: left;
     }
-    .license-box.visible {
-      display: block;
-    }
+    .license-box.visible { display: block; }
     .license-box .label {
       font-size: 11px;
       font-weight: 600;
@@ -111,17 +108,25 @@
       white-space: nowrap;
       transition: background 0.15s;
     }
-    .license-box .copy-btn:hover {
-      background: #15803d;
-    }
-    .license-box .copy-btn.copied {
-      background: #059669;
-    }
+    .license-box .copy-btn:hover { background: #15803d; }
+    .license-box .copy-btn.copied { background: #059669; }
     .license-box .hint {
       font-size: 12px;
       color: #64748b;
       margin-top: 10px;
       line-height: 1.5;
+    }
+    .debug {
+      margin-top: 24px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px dashed #e2e8f0;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #94a3b8;
+      text-align: left;
+      word-break: break-all;
     }
   </style>
 </head>
@@ -138,7 +143,6 @@
       SearchDash will activate automatically.
     </p>
 
-    <!-- License Key Display -->
     <div class="license-box" id="licenseBox">
       <div class="label" id="licenseLabel">Your License Key</div>
       <div class="key-row">
@@ -147,44 +151,61 @@
       </div>
       <p class="hint" id="licenseHint"></p>
     </div>
+
+    <div class="debug" id="debugInfo"></div>
   </div>
 
   <script>
     (function() {
-      const statusEl = document.getElementById('statusMsg');
-      const infoEl = document.getElementById('infoMsg');
-      const licenseBox = document.getElementById('licenseBox');
-      const licenseLabel = document.getElementById('licenseLabel');
-      const licenseKeyText = document.getElementById('licenseKeyText');
-      const licenseHint = document.getElementById('licenseHint');
-      const copyBtn = document.getElementById('copyBtn');
+      var statusEl = document.getElementById('statusMsg');
+      var infoEl = document.getElementById('infoMsg');
+      var licenseBox = document.getElementById('licenseBox');
+      var licenseLabel = document.getElementById('licenseLabel');
+      var licenseKeyText = document.getElementById('licenseKeyText');
+      var licenseHint = document.getElementById('licenseHint');
+      var copyBtn = document.getElementById('copyBtn');
+      var debugEl = document.getElementById('debugInfo');
 
-      // Parse query params from Creem redirect
-      const params = new URLSearchParams(window.location.search);
-      const checkoutId = params.get('checkout_id');
-      const orderId = params.get('order_id');
-      const customerId = params.get('customer_id');
-      const productId = params.get('product_id');
+      function log(msg) {
+        debugEl.textContent += msg + '\n';
+        console.log(msg);
+      }
 
-      // Show license key in the UI
+      // Parse ALL query params from Creem redirect
+      var params = new URLSearchParams(window.location.search);
+      log('URL: ' + window.location.href);
+      log('All params: ' + window.location.search);
+
+      // Try multiple possible param names for checkout ID
+      var checkoutId = params.get('checkout_id')
+        || params.get('checkout')
+        || params.get('checkoutId')
+        || params.get('id')
+        || '';
+
+      var orderId = params.get('order_id')
+        || params.get('order')
+        || params.get('orderId')
+        || '';
+
+      log('checkoutId: ' + (checkoutId || '(none)'));
+      log('orderId: ' + (orderId || '(none)'));
+
       function showLicenseKey(key, isSuccess) {
         licenseKeyText.textContent = key;
         licenseBox.classList.add('visible');
-
         if (isSuccess) {
           licenseLabel.textContent = 'Your License Key';
           licenseHint.textContent = 'Save this key for your records. You can use it to re-activate SearchDash Pro on any device.';
         } else {
-          licenseLabel.textContent = 'Your License Key — Activate Manually';
-          licenseHint.innerHTML = 'Auto-activation failed. Copy this key and paste it into the SearchDash extension <strong>Purchase</strong> page to activate Pro manually.';
+          licenseLabel.textContent = 'Your License Key';
+          licenseHint.innerHTML = 'Copy this key and paste it into the SearchDash extension <strong>Purchase</strong> page to activate Pro manually.';
         }
       }
 
-      // Copy button handler
       copyBtn.addEventListener('click', function() {
-        const key = licenseKeyText.textContent;
+        var key = licenseKeyText.textContent;
         if (!key) return;
-
         navigator.clipboard.writeText(key).then(function() {
           copyBtn.textContent = 'Copied!';
           copyBtn.classList.add('copied');
@@ -193,7 +214,6 @@
             copyBtn.classList.remove('copied');
           }, 2000);
         }).catch(function() {
-          // Fallback: select the text
           var range = document.createRange();
           range.selectNode(licenseKeyText);
           window.getSelection().removeAllRanges();
@@ -207,27 +227,38 @@
         });
       });
 
-      if (!checkoutId || !orderId) {
+      if (!checkoutId) {
         statusEl.className = 'status error';
-        statusEl.textContent = 'Missing payment information.';
-        infoEl.textContent = 'Please check your Creem Dashboard for the license key and activate it manually in the SearchDash extension.';
+        statusEl.textContent = 'Missing checkout information.';
+        infoEl.innerHTML = 'The payment was successful but we could not identify your order. Please find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a> and activate it manually in the SearchDash extension.';
+        log('ERROR: No checkoutId found in URL params');
         return;
       }
 
-      // Try to send activation data to the SearchDash extension
       // NOTE: This ID changes after Chrome Web Store publishing. Update it then.
-      const extensionId = 'mpjpfdlbhfcejfmaafccigkhcdfclfoi';
+      var extensionId = 'mpjpfdlbhfcejfmaafccigkhcdfclfoi';
 
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+      log('Extension ID: ' + extensionId);
+      log('Sending paymentSuccess message...');
+
+      function tryActivate() {
+        if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
+          log('chrome.runtime.sendMessage not available');
+          statusEl.className = 'status success';
+          statusEl.textContent = 'Payment confirmed!';
+          infoEl.innerHTML = 'Open the SearchDash extension <strong>Purchase</strong> page and click "Check Payment" to activate.<br><br>Or find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
+          return;
+        }
+
         chrome.runtime.sendMessage(extensionId, {
           type: 'paymentSuccess',
           checkoutId: checkoutId,
-          orderId: orderId,
-          customerId: customerId,
-          productId: productId
+          orderId: orderId || undefined
         }, function(response) {
+          log('Response received: ' + JSON.stringify(response));
+
           if (chrome.runtime.lastError) {
-            // Could not reach the extension — can't get the key
+            log('Error: ' + chrome.runtime.lastError.message);
             statusEl.className = 'status error';
             statusEl.textContent = 'Could not reach the extension.';
             infoEl.innerHTML = 'Please open the SearchDash extension and activate your license manually.<br><br>Find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
@@ -238,31 +269,26 @@
             statusEl.className = 'status success';
             statusEl.textContent = 'License activated! All Pro features unlocked.';
             infoEl.textContent = 'You can close this page and start using SearchDash Pro.';
-
-            // Show license key as backup reference
             if (response.licenseKey) {
               showLicenseKey(response.licenseKey, true);
             }
           } else {
+            var msg = (response && response.message) ? response.message : 'Activation failed.';
+            log('Activation failed: ' + msg);
             statusEl.className = 'status error';
             statusEl.textContent = 'Activation failed.';
             infoEl.textContent = 'Don\'t worry — you can still activate manually.';
 
-            // Show license key prominently for manual activation
             if (response && response.licenseKey) {
               showLicenseKey(response.licenseKey, false);
             } else {
-              // No key in response — fallback to Creem Dashboard
               infoEl.innerHTML = 'Please open the SearchDash extension and activate your license manually.<br><br>Find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
             }
           }
         });
-      } else {
-        // Not running in Chrome extension context
-        statusEl.className = 'status success';
-        statusEl.textContent = 'Payment confirmed!';
-        infoEl.innerHTML = 'Open the SearchDash extension purchase page and click "Check Payment" to activate.<br><br>Or find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
       }
+
+      tryActivate();
     })();
   </script>
 </body>

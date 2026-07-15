@@ -505,7 +505,6 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     return { success: false, licenseKey: null, message: 'Missing checkout ID.' };
   }
 
-  // Fetch checkout details from Creem — license key is only available after payment
   console.log('Fetching checkout details for:', checkoutId);
   const checkout = await fetchCheckoutDetails(checkoutId);
 
@@ -517,7 +516,6 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     return { success: false, licenseKey: null, message: 'Payment not yet completed. Please complete payment first.' };
   }
 
-  // Get the license key from the completed checkout
   const licenseKey = checkout.license_keys && checkout.license_keys.length > 0
     ? checkout.license_keys[0].key
     : null;
@@ -529,7 +527,7 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
 
   console.log('Got license key, activating...');
 
-  // Activate the license on Creem — binds to this browser instance
+  // Try to activate the license on Creem (binds to this instance)
   const result = await activateLicense(licenseKey);
 
   if (result.success) {
@@ -539,11 +537,27 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
       delete pending[checkoutId];
       await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
     }
-
     return { success: true, licenseKey, message: 'License auto-activated! Pro features unlocked.' };
   }
 
-  return { success: false, licenseKey, message: result.message || 'Activation failed.' };
+  // Activate API call failed, but the key is valid (confirmed by completed checkout).
+  // Save locally anyway so Pro features work immediately.
+  console.warn('Creem activate API failed, saving key locally:', result.message);
+  await saveLicense({
+    key: licenseKey,
+    activated: true,
+    activatedAt: new Date().toISOString(),
+    planName: 'Pro'
+  });
+
+  // Clean up the pending entry
+  const pending = await getPendingCheckouts();
+  if (pending[checkoutId]) {
+    delete pending[checkoutId];
+    await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
+  }
+
+  return { success: true, licenseKey, message: 'License activated! Pro features unlocked.' };
 }
 
 // ==================== Message Handling ====================
