@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upgrade to Pro - SearchDash</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      max-width: 640px;
+      margin: 40px auto;
+      padding: 0 20px;
+      background: #f9fafb;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .section {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 16px;
+    }
+
+    /* Pricing card */
+    .pricing-card {
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+    }
+
+    .pricing-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #3b82f6;
+      margin-bottom: 16px;
+    }
+
+    .pricing-amount {
+      font-size: 48px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .pricing-note {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 24px;
+    }
+
+    .feature-list {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 24px;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      font-size: 14px;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-list li::before {
+      content: "✓";
+      color: #10b981;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .button-primary {
+      background-color: #3b82f6;
+      color: #ffffff;
+      width: 100%;
+    }
+
+    .button-primary:hover {
+      background-color: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .button-secondary {
+      background-color: #f3f4f6;
+      color: #374151;
+    }
+
+    .button-secondary:hover {
+      background-color: #e5e7eb;
+    }
+
+    /* License activation */
+    .license-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .license-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: monospace;
+      letter-spacing: 1px;
+    }
+
+    .license-input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 4px;
+      line-height: 1.6;
+    }
+
+    .help-text a {
+      color: #3b82f6;
+      text-decoration: underline;
+    }
+
+    .license-status {
+      padding: 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .license-status.success {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .license-status.error {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .license-status.info {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+
+    .status-message {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 12px 20px;
+      background: #10b981;
+      color: #ffffff;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+
+    .status-message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>Upgrade to Pro</h1>
+    <p class="subtitle">Unlock unlimited search engines and advanced features</p>
+  </div>
+
+  <!-- Pro status -->
+  <div id="licenseStatus" class="section" style="display: none;">
+    <div id="licenseStatusContent"></div>
+  </div>
+
+  <!-- Pricing section -->
+  <div class="section" id="pricingSection">
+    <div class="pricing-card">
+      <div class="pricing-title">SearchDash Pro</div>
+      <div class="pricing-amount">$4.99</div>
+      <div class="pricing-note">One-time purchase · Lifetime access</div>
+
+      <ul class="feature-list">
+        <li>Unlimited search engines</li>
+        <li>Drag & drop reorder</li>
+        <li>Set default search engine</li>
+        <li>Group management (coming soon)</li>
+        <li>Priority support</li>
+        <li>Lifetime updates</li>
+      </ul>
+
+      <button id="buyBtn" class="button button-primary">
+        Buy Now — $4.99
+      </button>
+      <div class="help-text" style="margin-top: 12px;">
+        Powered by Creem · Secure payment · Instant license delivery
+      </div>
+    </div>
+  </div>
+
+  <!-- License activation section -->
+  <div class="section">
+    <h2 class="section-title">Already Purchased? Activate License</h2>
+    <div class="license-form">
+      <input
+        type="text"
+        id="licenseKeyInput"
+        class="license-input"
+        placeholder="Enter your license key (e.g. sk_xxxxxxxxxxxx)"
+        autocomplete="off"
+      >
+      <div class="help-text">
+        <strong>Auto-activation:</strong> After payment you'll be redirected to a confirmation page that automatically activates your license.<br>
+        <strong>Manual:</strong> Find your license key in the <a href="https://creem.io/dashboard" target="_blank">Creem Dashboard</a> → License Keys, then paste it below.
+      </div>
+      <div class="actions">
+        <button id="activateBtn" class="button button-primary">Activate License</button>
+        <button id="deactivateBtn" class="button button-secondary" style="display: none;">Remove License</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-message" id="statusMessage"></div>
+
+  <script src="purchase.js"></script>
+</body>
+</html>

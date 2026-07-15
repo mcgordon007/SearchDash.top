@@ -1,0 +1,11 @@
+# Cloudflare Pages — Headers
+# HTTPS + security headers for searchdash.top
+
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Cache-Control: public, max-age=3600
+
+/assets/*
+  Cache-Control: public, max-age=86400, immutable
