@@ -61,10 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Store the checkout ID for later auto-check
         pendingCheckoutId = response.checkoutId;
 
-        // Show the license key to the user immediately
-        if (response.licenseKey) {
-          showLicenseKey(response.licenseKey);
-        }
+        // License key is only available after payment — don't try to show it yet
 
         // Open Creem checkout in a new tab
         chrome.tabs.create({ url: response.checkoutUrl }, () => {
@@ -92,22 +89,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Load any pending license keys from storage
+   * Load any pending checkout IDs from storage
    */
   function loadPendingKeys() {
     chrome.runtime.sendMessage({ type: 'getPendingLicenses' }, (response) => {
       if (!response || !response.success || !response.data) return;
 
       const pending = response.data;
-      const keys = Object.values(pending);
+      const keys = Object.keys(pending);
       if (keys.length === 0) return;
 
-      // Show the most recent pending key
+      // Restore the most recent pending checkout ID
       const latest = keys.reduce((a, b) =>
-        new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+        new Date(pending[a].createdAt) > new Date(pending[b].createdAt) ? a : b
       );
-      if (latest && latest.licenseKey) {
-        showLicenseKey(latest.licenseKey);
+      if (latest) {
+        pendingCheckoutId = latest;
+        // License key isn't available until payment completes
       }
     });
   }
