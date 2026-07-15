@@ -99,8 +99,12 @@ const DEFAULT_SETTINGS = {
 const DEFAULT_LICENSE = {
   key: null,
   activated: false,
-  activatedAt: null
+  activatedAt: null,
+  planName: null
 };
+
+// Pending checkout mapping: checkoutId → licenseKey
+const STORAGE_KEY_PENDING_CHECKOUTS = 'pendingCheckouts';
 
 // Creem API base URL — use test-api for test mode, api for production
 const CREEM_API = 'https://test-api.creem.io/v1';
@@ -408,7 +412,8 @@ async function getInstanceId() {
 
 /**
  * Create a checkout session via Creem API
- * Returns a checkout URL that the user can visit to pay
+ * Returns a checkout URL. Also stores the license key (returned at creation time)
+ * so it can be auto-activated after payment.
  * @returns {Promise<Object>} Checkout URL or error
  */
 async function createCheckout() {
@@ -431,6 +436,20 @@ async function createCheckout() {
     }
 
     const data = await response.json();
+
+    // Store the license key that Creem generates at checkout creation time
+    // It will be auto-activated when payment succeeds
+    if (data.license_keys && data.license_keys.length > 0) {
+      const licenseKey = data.license_keys[0].key;
+      const pending = await getPendingCheckouts();
+      pending[data.id] = {
+        licenseKey,
+        createdAt: new Date().toISOString()
+      };
+      await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
+      console.log('Stored pending license key for checkout:', data.id);
+    }
+
     return { success: true, checkoutUrl: data.checkout_url, checkoutId: data.id };
   } catch (error) {
     console.error('Checkout creation error:', error);
@@ -439,61 +458,40 @@ async function createCheckout() {
 }
 
 /**
- * Fetch checkout details from Creem API (includes license_keys after payment)
- * @param {string} checkoutId - The checkout session ID
- * @returns {Promise<Object>} Checkout details or error
+ * Get pending checkout mappings from storage
+ * @returns {Promise<Object>} Map of checkoutId → { licenseKey, createdAt }
  */
-async function getCheckoutDetails(checkoutId) {
-  try {
-    const response = await fetch(`${CREEM_API}/checkouts/${checkoutId}`, {
-      method: 'GET',
-      headers: {
-        'x-api-key': CREEM_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      // 404 means the endpoint doesn't exist — fallback gracefully
-      return { success: false, error: `GET checkout not available (${response.status})` };
-    }
-
-    const data = await response.json();
-    return { success: true, data };
-  } catch (error) {
-    console.error('Get checkout error:', error);
-    return { success: false, error: error.message };
-  }
+async function getPendingCheckouts() {
+  const result = await chrome.storage.sync.get([STORAGE_KEY_PENDING_CHECKOUTS]);
+  return result[STORAGE_KEY_PENDING_CHECKOUTS] || {};
 }
 
 /**
- * Handle payment success — called from the hosted success page
- * Attempts to auto-activate by fetching checkout details from Creem
+ * Handle payment success — auto-activate the license key
+ * Looks up the license key from the checkout creation step and activates it
  * @param {Object} params - Payment info from success page
  * @returns {Promise<Object>} Activation result
  */
 async function handlePaymentSuccess({ checkoutId, orderId }) {
-  // Try to get checkout details (includes license_keys after payment)
-  const checkoutResult = await getCheckoutDetails(checkoutId);
+  const pending = await getPendingCheckouts();
+  const entry = pending[checkoutId];
 
-  if (checkoutResult.success && checkoutResult.data && checkoutResult.data.license_keys) {
-    const licenseKeys = checkoutResult.data.license_keys;
-    if (licenseKeys.length > 0) {
-      const key = licenseKeys[0].key;
-      // Activate the license key
-      await saveLicense({
-        key: key,
-        activated: true,
-        activatedAt: new Date().toISOString(),
-        planName: 'Pro'
-      });
-      return { success: true, message: 'License auto-activated!' };
-    }
+  if (!entry || !entry.licenseKey) {
+    console.warn('No pending license key found for checkout:', checkoutId);
+    return { success: false, message: 'License key not found. Please activate manually from the Creem Dashboard.' };
   }
 
-  // Fallback: if GET checkout doesn't work, try to find license via validate
-  // We'll try a few common license key formats that Creem might generate
-  return { success: false, message: 'Auto-activation not available. Please enter your license key manually.', checkoutId, orderId };
+  // Activate the license key on Creem and save locally
+  const result = await activateLicense(entry.licenseKey);
+
+  if (result.success) {
+    // Clean up the pending entry
+    delete pending[checkoutId];
+    await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
+    return { success: true, message: 'License auto-activated! Pro features unlocked.' };
+  }
+
+  return result;
 }
 
 // ==================== Message Handling ====================
