@@ -450,7 +450,9 @@ async function createCheckout() {
       console.log('Stored pending license key for checkout:', data.id);
     }
 
-    return { success: true, checkoutUrl: data.checkout_url, checkoutId: data.id };
+    const licenseKey = data.license_keys && data.license_keys.length > 0 ? data.license_keys[0].key : null;
+
+    return { success: true, checkoutUrl: data.checkout_url, checkoutId: data.id, licenseKey };
   } catch (error) {
     console.error('Checkout creation error:', error);
     return { success: false, error: error.message };
@@ -654,6 +656,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           const { checkoutId } = message;
           const result = await handlePaymentSuccess({ checkoutId });
           sendResponse(result);
+          break;
+        }
+
+        case 'getPendingLicenses': {
+          const pending = await getPendingCheckouts();
+          sendResponse({ success: true, data: pending });
           break;
         }
 

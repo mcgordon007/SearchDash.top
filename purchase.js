@@ -13,11 +13,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const activateBtn = document.getElementById('activateBtn');
   const deactivateBtn = document.getElementById('deactivateBtn');
   const statusMessage = document.getElementById('statusMessage');
+  const keyDisplay = document.getElementById('keyDisplay');
+  const keyValue = document.getElementById('keyValue');
+  const keyCopyBtn = document.getElementById('keyCopyBtn');
 
   // Check current license status on load
   loadLicenseStatus();
+  // Also load any pending license keys
+  loadPendingKeys();
 
   let pendingCheckoutId = null;
+
+  // Copy button handler
+  keyCopyBtn.addEventListener('click', () => {
+    const key = keyValue.textContent;
+    if (!key) return;
+
+    navigator.clipboard.writeText(key).then(() => {
+      keyCopyBtn.textContent = 'Copied!';
+      keyCopyBtn.classList.add('copied');
+      setTimeout(() => {
+        keyCopyBtn.textContent = 'Copy';
+        keyCopyBtn.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback: select the text
+      const range = document.createRange();
+      range.selectNode(keyValue);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      keyCopyBtn.textContent = 'Copied!';
+      keyCopyBtn.classList.add('copied');
+      setTimeout(() => {
+        keyCopyBtn.textContent = 'Copy';
+        keyCopyBtn.classList.remove('copied');
+      }, 2000);
+    });
+  });
 
   // Buy button — create checkout via Creem API
   buyBtn.addEventListener('click', () => {
@@ -28,6 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response && response.success && response.checkoutUrl) {
         // Store the checkout ID for later auto-check
         pendingCheckoutId = response.checkoutId;
+
+        // Show the license key to the user immediately
+        if (response.licenseKey) {
+          showLicenseKey(response.licenseKey);
+        }
+
         // Open Creem checkout in a new tab
         chrome.tabs.create({ url: response.checkoutUrl }, () => {
           buyBtn.textContent = 'Payment in progress...';
@@ -42,6 +80,37 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  /**
+   * Show the license key in the key display section
+   */
+  function showLicenseKey(key) {
+    keyValue.textContent = key;
+    keyDisplay.style.display = 'block';
+    // Auto-fill the activation input
+    licenseKeyInput.value = key;
+  }
+
+  /**
+   * Load any pending license keys from storage
+   */
+  function loadPendingKeys() {
+    chrome.runtime.sendMessage({ type: 'getPendingLicenses' }, (response) => {
+      if (!response || !response.success || !response.data) return;
+
+      const pending = response.data;
+      const keys = Object.values(pending);
+      if (keys.length === 0) return;
+
+      // Show the most recent pending key
+      const latest = keys.reduce((a, b) =>
+        new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+      );
+      if (latest && latest.licenseKey) {
+        showLicenseKey(latest.licenseKey);
+      }
+    });
+  }
 
   /**
    * Show a hint to check payment status after payment
@@ -79,6 +148,10 @@ document.addEventListener('DOMContentLoaded', () => {
             loadLicenseStatus();
             const hintEl = document.getElementById('checkPaymentHint');
             if (hintEl) hintEl.remove();
+            // Also show the key for reference
+            if (response.licenseKey) {
+              showLicenseKey(response.licenseKey);
+            }
           } else {
             showToast('Payment not yet confirmed. Please try again or enter your license key manually.', 'error');
           }
@@ -108,6 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('License activated! Pro features unlocked.', 'success');
           licenseKeyInput.value = '';
           loadLicenseStatus();
+          // Also show the key for reference
+          showLicenseKey(licenseKey);
         } else {
           showToast(response?.message || 'Activation failed', 'error');
         }
@@ -152,6 +227,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pricingSection.style.display = 'none';
         activateBtn.style.display = 'none';
         deactivateBtn.style.display = 'inline-flex';
+        // Show the key
+        if (license.key) {
+          showLicenseKey(license.key);
+        }
       } else {
         // Free user
         licenseStatus.style.display = 'none';
