@@ -525,24 +525,10 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     return { success: false, licenseKey: null, message: 'No license key found in order. Please check your Creem Dashboard.' };
   }
 
-  console.log('Got license key, activating...');
+  console.log('Got license key, saving locally...');
 
-  // Try to activate the license on Creem (binds to this instance)
-  const result = await activateLicense(licenseKey);
-
-  if (result.success) {
-    // Clean up the pending entry
-    const pending = await getPendingCheckouts();
-    if (pending[checkoutId]) {
-      delete pending[checkoutId];
-      await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
-    }
-    return { success: true, licenseKey, message: 'License auto-activated! Pro features unlocked.' };
-  }
-
-  // Activate API call failed, but the key is valid (confirmed by completed checkout).
-  // Save locally anyway so Pro features work immediately.
-  console.warn('Creem activate API failed, saving key locally:', result.message);
+  // Key is confirmed valid (from completed Creem checkout). Save locally.
+  // No need to call /activate — it would fail if activation_limit is reached.
   await saveLicense({
     key: licenseKey,
     activated: true,
