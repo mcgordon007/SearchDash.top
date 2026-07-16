@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const settingOpenInNewTab = document.getElementById('settingOpenInNewTab');
   const settingShowContextMenu = document.getElementById('settingShowContextMenu');
   const settingDefaultEngine = document.getElementById('settingDefaultEngine');
+  const settingSelectionToolbar = document.getElementById('settingSelectionToolbar');
+  const toolbarEngineList = document.getElementById('toolbarEngineList');
 
   const FREE_ENGINE_LIMIT = 5;
   let engines = [];
@@ -159,6 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const settings = resp.data;
       settingOpenInNewTab.checked = settings.openInNewTab !== false;
       settingShowContextMenu.checked = settings.showContextMenu !== false;
+      settingSelectionToolbar.checked = settings.selectionToolbarEnabled !== false;
 
       // Populate default engine dropdown
       settingDefaultEngine.innerHTML = '';
@@ -169,22 +172,68 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.id === settings.defaultEngine) opt.selected = true;
         settingDefaultEngine.appendChild(opt);
       });
+
+      // Render toolbar engine checkboxes
+      renderToolbarEngines(settings.selectionToolbarEngines || []);
+    });
+  }
+
+  function renderToolbarEngines(selectedIds) {
+    toolbarEngineList.innerHTML = '';
+    const enabledEngines = engines.filter(e => e.enabled);
+    if (enabledEngines.length === 0) {
+      toolbarEngineList.innerHTML = '<span style="font-size:12px;color:var(--muted);">No engines enabled. Enable engines above first.</span>';
+      return;
+    }
+    enabledEngines.forEach(engine => {
+      const isChecked = selectedIds.length === 0 || selectedIds.includes(engine.id);
+      const chip = document.createElement('label');
+      chip.style.cssText = `
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 4px 10px; border: 1px solid ${isChecked ? 'var(--accent)' : 'var(--rule)'};
+        border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500;
+        background: ${isChecked ? '#eff6ff' : 'var(--input-bg)'};
+        color: ${isChecked ? 'var(--accent)' : 'var(--ink)'};
+        transition: all 0.15s; user-select: none;
+      `;
+      chip.innerHTML = `<input type="checkbox" value="${engine.id}" ${isChecked ? 'checked' : ''} style="margin:0;cursor:pointer;"> ${engine.name}`;
+      const checkbox = chip.querySelector('input');
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          chip.style.borderColor = 'var(--accent)';
+          chip.style.background = '#eff6ff';
+          chip.style.color = 'var(--accent)';
+        } else {
+          chip.style.borderColor = 'var(--rule)';
+          chip.style.background = 'var(--input-bg)';
+          chip.style.color = 'var(--ink)';
+        }
+      });
+      toolbarEngineList.appendChild(chip);
     });
   }
 
   settingOpenInNewTab.addEventListener('change', () => autoSaveSettings());
   settingShowContextMenu.addEventListener('change', () => autoSaveSettings());
   settingDefaultEngine.addEventListener('change', () => autoSaveSettings());
+  settingSelectionToolbar.addEventListener('change', () => autoSaveSettings());
 
   async function autoSaveSettings() {
     const settings = {
       openInNewTab: settingOpenInNewTab.checked,
       showContextMenu: settingShowContextMenu.checked,
-      defaultEngine: settingDefaultEngine.value
+      defaultEngine: settingDefaultEngine.value,
+      selectionToolbarEnabled: settingSelectionToolbar.checked,
+      selectionToolbarEngines: getToolbarEngineIds()
     };
     chrome.runtime.sendMessage({ type: 'saveSettings', settings }, () => {
       chrome.runtime.sendMessage({ type: 'rebuildContextMenus' });
     });
+  }
+
+  function getToolbarEngineIds() {
+    const checked = toolbarEngineList.querySelectorAll('input:checked');
+    return Array.from(checked).map(cb => cb.value);
   }
 
   // ── Save All ──

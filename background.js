@@ -69,7 +69,9 @@ const STORAGE_KEY_LICENSE = 'license';
 const DEFAULT_SETTINGS = {
   openInNewTab: true,       // Whether to open search results in a new tab
   showContextMenu: true,     // Whether to show the right-click context menu
-  defaultEngine: 'google'    // Default search engine ID
+  defaultEngine: 'google',   // Default search engine ID
+  selectionToolbarEnabled: true,  // Whether the floating text selection toolbar is shown
+  selectionToolbarEngines: []     // Custom engine IDs for the toolbar; empty = use all enabled
 };
 
 // Default license state
@@ -645,6 +647,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           await chrome.storage.local.set({ pendingQuery: message.query || '' });
           // Chrome doesn't support opening the popup programmatically,
           // so we just store the query and let the user open it via shortcut
+          sendResponse({ success: true });
+          break;
+        }
+
+        case 'openPurchasePage': {
+          chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
           sendResponse({ success: true });
           break;
         }
