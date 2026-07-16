@@ -211,6 +211,7 @@
     toolbar.style.left = left + 'px';
     toolbar.style.top = top + 'px';
     toolbar.style.transform = 'translateX(-50%)';
+    toolbar.style.display = 'grid';
     toolbar.style.opacity = '1';
     isVisible = true;
   }
