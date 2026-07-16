@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const customEngineUrl = document.getElementById('customEngineUrl');
   const customEngineCat = document.getElementById('customEngineCat');
   const addCustomEngineBtn = document.getElementById('addCustomEngineBtn');
+  const customEngineProOverlay = document.getElementById('customEngineProOverlay');
+  const customEngineProBadge = document.getElementById('customEngineProBadge');
 
   const FREE_ENGINE_LIMIT = 5;
   let engines = [];
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderEngineList();
     updateProBar();
     updateUpgradeButton();
+    updateCustomEngineGate();
     loadSettings();
   }
 
@@ -171,7 +174,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // ── Custom Engine ──
+  function updateCustomEngineGate() {
+    if (isProUser) {
+      customEngineProOverlay.style.display = 'none';
+      customEngineProBadge.style.display = 'none';
+      customEngineName.disabled = false;
+      customEngineUrl.disabled = false;
+      customEngineCat.disabled = false;
+      addCustomEngineBtn.disabled = false;
+    } else {
+      customEngineProOverlay.style.display = 'block';
+      customEngineProBadge.style.display = 'inline';
+      customEngineName.disabled = true;
+      customEngineUrl.disabled = true;
+      customEngineCat.disabled = true;
+      addCustomEngineBtn.disabled = true;
+      customEngineProOverlay.onclick = () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
+      };
+    }
+  }
+
   addCustomEngineBtn.addEventListener('click', () => {
+    if (!isProUser) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
+      return;
+    }
     const name = customEngineName.value.trim();
     const url = customEngineUrl.value.trim();
     const category = customEngineCat.value;
