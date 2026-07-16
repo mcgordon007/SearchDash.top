@@ -10,13 +10,12 @@
 
 // ==================== Categories ====================
 const ENGINE_CATEGORIES = [
-  { id: 'general', label: 'General', icon: 'G' },
-  { id: 'dev', label: 'Dev', icon: 'D' },
-  { id: 'knowledge', label: 'Knowledge', icon: 'K' },
-  { id: 'shopping', label: 'Shopping', icon: 'S' },
-  { id: 'video', label: 'Video', icon: 'V' },
-  { id: 'social', label: 'Social', icon: 'S' },
-  { id: 'ai', label: 'AI', icon: 'A' }
+  { id: 'general', label: 'General' },
+  { id: 'dev', label: 'Dev' },
+  { id: 'knowledge', label: 'Knowledge' },
+  { id: 'shopping', label: 'Shopping' },
+  { id: 'video', label: 'Video' },
+  { id: 'social', label: 'Social' }
 ];
 
 // ==================== Default Search Engines ====================
@@ -58,12 +57,7 @@ const DEFAULT_ENGINES = [
   // Social
   { id: 'x', name: 'X (Twitter)', url: 'https://x.com/search?q={searchTerms}&src=typed_query', shortcut: 'x', category: 'social', enabled: false },
   { id: 'linkedin', name: 'LinkedIn', url: 'https://www.linkedin.com/search/results/all/?keywords={searchTerms}', shortcut: 'li', category: 'social', enabled: false },
-  { id: 'facebook', name: 'Facebook', url: 'https://www.facebook.com/search/top/?q={searchTerms}', shortcut: 'fb', category: 'social', enabled: false },
-
-  // AI
-  { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/search?q={searchTerms}', shortcut: 'pp', category: 'ai', enabled: false },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/?q={searchTerms}', shortcut: 'cg', category: 'ai', enabled: false },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/search?q={searchTerms}', shortcut: 'gm', category: 'ai', enabled: false }
+  { id: 'facebook', name: 'Facebook', url: 'https://www.facebook.com/search/top/?q={searchTerms}', shortcut: 'fb', category: 'social', enabled: false }
 ];
 
 // Storage keys

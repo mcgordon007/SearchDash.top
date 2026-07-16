@@ -67,8 +67,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (catResp && catResp.success && catResp.data) {
       categories = catResp.data;
     }
-    renderCategoryTabs();
-
     chrome.runtime.sendMessage({ type: 'getEngines' }, (engResp) => {
       if (engResp && engResp.success) {
         allEngines = engResp.data;
@@ -78,19 +76,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // ── Category Tabs ──
+  // ── Category Tabs (2-row grid with left/right pagination) ──
+  const TABS_PER_PAGE = 6; // 3 columns × 2 rows
+  let tabPage = 0;
+
   function renderCategoryTabs() {
     categoryTabs.innerHTML = '';
     if (categories.length === 0) return;
 
-    categories.forEach(cat => {
+    const start = tabPage * TABS_PER_PAGE;
+    const page = categories.slice(start, start + TABS_PER_PAGE);
+    const totalPages = Math.ceil(categories.length / TABS_PER_PAGE);
+
+    page.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'tab' + (cat.id === activeCategory ? ' active' : '');
       btn.textContent = cat.label;
       btn.addEventListener('click', () => {
         activeCategory = cat.id;
         renderCategoryTabs();
-        // Reset multi-selection when switching categories
         if (multiMode) {
           selectedEngines.clear();
           updateMultiActionBar();
@@ -99,7 +103,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       categoryTabs.appendChild(btn);
     });
+
+    // Fill empty slots to keep grid stable
+    for (let i = page.length; i < TABS_PER_PAGE; i++) {
+      const empty = document.createElement('div');
+      categoryTabs.appendChild(empty);
+    }
+
+    document.getElementById('tabLeft').classList.toggle('hidden', tabPage === 0);
+    document.getElementById('tabRight').classList.toggle('hidden', tabPage >= totalPages - 1);
   }
+
+  document.getElementById('tabLeft').addEventListener('click', () => {
+    if (tabPage > 0) {
+      tabPage--;
+      renderCategoryTabs();
+    }
+  });
+
+  document.getElementById('tabRight').addEventListener('click', () => {
+    const totalPages = Math.ceil(categories.length / TABS_PER_PAGE);
+    if (tabPage < totalPages - 1) {
+      tabPage++;
+      renderCategoryTabs();
+    }
+  });
 
   // ── Engine Buttons ──
   function renderEngineButtons() {
