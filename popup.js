@@ -138,13 +138,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       engineGrid.classList.remove('multi-mode');
     }
 
-    const categoryEngines = allEngines.filter(e => e.category === activeCategory);
-    if (categoryEngines.length === 0) {
-      engineGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted);font-size:12px;">No engines in this category</div>';
+    // Multi-mode: show ALL enabled engines across all categories
+    // Single-mode: show only engines in the active category
+    const displayEngines = multiMode
+      ? allEngines.filter(e => e.enabled)
+      : allEngines.filter(e => e.category === activeCategory);
+    if (displayEngines.length === 0) {
+      engineGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:var(--muted);font-size:12px;">' + (multiMode ? 'No engines enabled' : 'No engines in this category') + '</div>';
       return;
     }
 
-    categoryEngines.forEach((engine, idx) => {
+    displayEngines.forEach((engine, idx) => {
       const enabledCount = allEngines.filter(e => e.enabled).length;
       const isEngineEnabled = engine.enabled;
       const isBeyondFreeLimit = !isProUser && enabledCount >= FREE_ENGINE_LIMIT && !engine.enabled;
@@ -158,14 +162,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       const iconClass = engine.id === 'google' ? 'ei-google' :
         engine.id === 'bing' ? 'ei-bing' :
         engine.id === 'duckduckgo' ? 'ei-duckduckgo' :
+        engine.id === 'yahoo' ? 'ei-yahoo' :
+        engine.id === 'brave' ? 'ei-brave' :
         engine.id === 'github' ? 'ei-github' :
-        engine.id === 'reddit' ? 'ei-reddit' :
-        engine.id === 'wikipedia' ? 'ei-wikipedia' :
-        engine.id === 'amazon' ? 'ei-amazon' :
-        engine.id === 'youtube' ? 'ei-youtube' :
-        engine.id === 'x' ? 'ei-x' :
-        engine.id === 'ebay' ? 'ei-ebay' :
         engine.id === 'stackoverflow' ? 'ei-stackoverflow' :
+        engine.id === 'mdn' ? 'ei-mdn' :
+        engine.id === 'npm' ? 'ei-npm' :
+        engine.id === 'pypi' ? 'ei-pypi' :
+        engine.id === 'wikipedia' ? 'ei-wikipedia' :
+        engine.id === 'reddit' ? 'ei-reddit' :
+        engine.id === 'quora' ? 'ei-quora' :
+        engine.id === 'wolfram' ? 'ei-wolfram' :
+        engine.id === 'amazon' ? 'ei-amazon' :
+        engine.id === 'ebay' ? 'ei-ebay' :
+        engine.id === 'etsy' ? 'ei-etsy' :
+        engine.id === 'walmart' ? 'ei-walmart' :
+        engine.id === 'youtube' ? 'ei-youtube' :
+        engine.id === 'vimeo' ? 'ei-vimeo' :
+        engine.id === 'twitch' ? 'ei-twitch' :
+        engine.id === 'x' ? 'ei-x' :
+        engine.id === 'linkedin' ? 'ei-linkedin' :
+        engine.id === 'facebook' ? 'ei-facebook' :
         '';
 
       btn.innerHTML = `
