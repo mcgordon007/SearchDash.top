@@ -365,10 +365,23 @@ async function activateLicense(licenseKey) {
 }
 
 /**
- * Deactivate (remove) the license
+ * Enable all engines (called when Pro is activated)
+ */
+async function enableAllEngines() {
+  const engines = await getEngines();
+  const updated = engines.map(e => ({ ...e, enabled: true }));
+  await saveEngines(updated);
+  await rebuildContextMenus();
+}
+
+/**
+ * Deactivate (remove) the license and reset to free tier (only 5 engines)
  */
 async function deactivateLicense() {
   await saveLicense(DEFAULT_LICENSE);
+  // Reset to default free tier (first 5 enabled, rest disabled)
+  await chrome.storage.sync.remove(STORAGE_KEY_ENGINES);
+  await rebuildContextMenus();
   return { success: true, message: 'License removed.' };
 }
 
@@ -512,6 +525,9 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     activatedAt: new Date().toISOString(),
     planName: 'Pro'
   });
+
+  // Enable all engines for Pro user
+  await enableAllEngines();
 
   // Clean up the pending entry
   const pending = await getPendingCheckouts();
@@ -684,6 +700,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               activatedAt: new Date().toISOString(),
               planName: verifyResult.planName || 'Pro'
             });
+            // Enable all engines for Pro user
+            await enableAllEngines();
             sendResponse({ success: true, licenseKey, message: 'License activated! Pro features unlocked.' });
           } else {
             sendResponse({ success: false, message: verifyResult.error || 'Invalid license key.' });
