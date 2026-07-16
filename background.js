@@ -109,9 +109,9 @@ const STORAGE_KEY_PENDING_CHECKOUTS = 'pendingCheckouts';
 // Creem API base URL — use test-api for test mode, api for production
 const CREEM_API = 'https://test-api.creem.io/v1';
 // You need to set these in production (from your Creem dashboard)
-const CREEM_API_KEY = 'creem_test_19XjS8tEok5qdFwHvJigyy';
+const CREEM_API_KEY = 'creem_test_1E52HTQXu8sVuT0TFiI28q';
 const CREEM_WEBHOOK_SECRET = 'YOUR_CREEM_WEBHOOK_SECRET';
-const CREEM_PRODUCT_ID = 'prod_4qJJmMaiTRP0ZafkqLGsR9'; // Pro version product ID from Creem
+const CREEM_PRODUCT_ID = 'prod_301vUGA291GpPREXctkVut'; // Pro version product ID from Creem
 
 // Payment success callback URL — hosted on searchdash.top
 const SUCCESS_URL = 'https://searchdash.top/success.html';
