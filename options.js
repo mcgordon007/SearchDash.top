@@ -16,6 +16,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const settingDefaultEngine = document.getElementById('settingDefaultEngine');
   const settingSelectionToolbar = document.getElementById('settingSelectionToolbar');
   const toolbarEngineList = document.getElementById('toolbarEngineList');
+  const customEngineName = document.getElementById('customEngineName');
+  const customEngineUrl = document.getElementById('customEngineUrl');
+  const customEngineCat = document.getElementById('customEngineCat');
+  const addCustomEngineBtn = document.getElementById('addCustomEngineBtn');
 
   const FREE_ENGINE_LIMIT = 5;
   let engines = [];
@@ -92,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       catEngines.forEach((engine, idx) => {
         const isBeyondFreeLimit = !isProUser && enabledCount >= FREE_ENGINE_LIMIT && !engine.enabled;
         const isLocked = !engine.enabled && isBeyondFreeLimit;
+        const isCustom = engine.custom === true;
 
         const item = document.createElement('div');
         item.className = 'engine-item' + (isLocked ? ' locked' : '');
@@ -99,10 +104,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           <span class="drag-handle">⋮⋮</span>
           <div class="engine-icon ${engineIdToIconClass(engine.id)}">${engine.name.charAt(0)}</div>
           <div class="engine-info">
-            <div class="engine-name">${engine.name}</div>
+            <div class="engine-name">${engine.name}${isCustom ? ' <span style="font-size:9px;color:var(--accent);font-weight:700;">CUSTOM</span>' : ''}</div>
             <div class="engine-url">${engine.url}</div>
           </div>
           <span class="engine-shortcut">${engine.shortcut}</span>
+          ${isCustom ? '<button class="engine-delete-btn" data-engine-id="' + engine.id + '" title="Remove custom engine" style="padding:2px 6px;border:1px solid var(--danger);border-radius:4px;background:transparent;color:var(--danger);cursor:pointer;font-size:11px;">&times;</button>' : ''}
           ${isLocked ? '<span class="pro-badge">PRO</span>' : ''}
           <button class="engine-toggle ${engine.enabled ? 'on' : ''}" data-engine-id="${engine.id}"></button>
         `;
@@ -123,6 +129,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           engine.enabled = !engine.enabled;
           renderAll();
         });
+
+        // Delete button for custom engines
+        const deleteBtn = item.querySelector('.engine-delete-btn');
+        if (deleteBtn) {
+          deleteBtn.addEventListener('click', () => {
+            if (!confirm('Delete "' + engine.name + '"? This cannot be undone.')) return;
+            engines = engines.filter(e => e.id !== engine.id);
+            renderAll();
+          });
+        }
 
         engineListEl.appendChild(item);
       });
@@ -152,6 +168,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!isProUser) {
       chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
     }
+  });
+
+  // ── Custom Engine ──
+  addCustomEngineBtn.addEventListener('click', () => {
+    const name = customEngineName.value.trim();
+    const url = customEngineUrl.value.trim();
+    const category = customEngineCat.value;
+
+    if (!name) { showToast('Please enter an engine name', true); return; }
+    if (!url) { showToast('Please enter a search URL', true); return; }
+    if (!url.includes('{searchTerms}')) { showToast('URL must contain {searchTerms} placeholder', true); return; }
+
+    const id = 'custom_' + Date.now();
+    const shortcut = name.substring(0, 3).toLowerCase();
+    engines.push({
+      id, name, url, shortcut, category, enabled: true, custom: true
+    });
+    customEngineName.value = '';
+    customEngineUrl.value = '';
+    renderAll();
+    showToast('"' + name + '" added successfully');
   });
 
   // ── Settings ──
@@ -185,8 +222,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       toolbarEngineList.innerHTML = '<span style="font-size:12px;color:var(--muted);">No engines enabled. Enable engines above first.</span>';
       return;
     }
-    enabledEngines.forEach(engine => {
-      const isChecked = selectedIds.length === 0 || selectedIds.includes(engine.id);
+    const MAX_TOOLBAR = 6;
+    enabledEngines.forEach((engine, idx) => {
+      const isChecked = selectedIds.length === 0 ? idx < MAX_TOOLBAR : selectedIds.includes(engine.id);
       const chip = document.createElement('label');
       chip.style.cssText = `
         display: inline-flex; align-items: center; gap: 4px;
@@ -199,6 +237,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       chip.innerHTML = `<input type="checkbox" value="${engine.id}" ${isChecked ? 'checked' : ''} style="margin:0;cursor:pointer;"> ${engine.name}`;
       const checkbox = chip.querySelector('input');
       checkbox.addEventListener('change', () => {
+        const currentChecked = toolbarEngineList.querySelectorAll('input:checked');
+        if (checkbox.checked && currentChecked.length > MAX_TOOLBAR) {
+          checkbox.checked = false;
+          showToast('Maximum ' + MAX_TOOLBAR + ' engines allowed in toolbar', true);
+          return;
+        }
         if (checkbox.checked) {
           chip.style.borderColor = 'var(--accent)';
           chip.style.background = '#eff6ff';

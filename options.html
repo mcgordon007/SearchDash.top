@@ -204,6 +204,33 @@
     <div id="engineList"></div>
   </div>
 
+  <!-- Custom Engine -->
+  <div class="section">
+    <h2 class="section-title">Add Custom Engine</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:120px;">
+        <label style="font-size:12px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Name</label>
+        <input type="text" id="customEngineName" placeholder="e.g. Neeva" style="width:100%;padding:6px 10px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--ink);font-size:13px;">
+      </div>
+      <div style="flex:2;min-width:200px;">
+        <label style="font-size:12px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Search URL (use {'{searchTerms}'} as placeholder)</label>
+        <input type="text" id="customEngineUrl" placeholder="https://example.com/search?q={'{searchTerms}'}" style="width:100%;padding:6px 10px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--ink);font-size:13px;">
+      </div>
+      <div style="min-width:70px;">
+        <label style="font-size:12px;font-weight:600;color:var(--ink);display:block;margin-bottom:4px;">Category</label>
+        <select id="customEngineCat" style="padding:6px 8px;border:1px solid var(--input-border);border-radius:6px;background:var(--input-bg);color:var(--ink);font-size:13px;">
+          <option value="general">General</option>
+          <option value="dev">Dev</option>
+          <option value="knowledge">Knowledge</option>
+          <option value="shopping">Shopping</option>
+          <option value="video">Video</option>
+          <option value="social">Social</option>
+        </select>
+      </div>
+      <button id="addCustomEngineBtn" class="button button-primary" style="padding:7px 16px;font-size:13px;">Add</button>
+    </div>
+  </div>
+
   <!-- General Settings -->
   <div class="section">
     <h2 class="section-title">General Settings</h2>
