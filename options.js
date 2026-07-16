@@ -227,8 +227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       amazon: 'amazon', youtube: 'youtube', x: 'x', yahoo: 'yahoo', brave: 'brave',
       mdn: 'mdn', npm: 'npm', pypi: 'pypi', quora: 'quora', wolfram: 'wolfram',
       ebay: 'ebay', etsy: 'etsy', walmart: 'walmart', vimeo: 'vimeo', twitch: 'twitch',
-      linkedin: 'linkedin', facebook: 'facebook', perplexity: 'perplexity',
-      chatgpt: 'chatgpt', gemini: 'gemini'
+      linkedin: 'linkedin', facebook: 'facebook'
     };
     return map[id] ? 'engine-icon ' + map[id] : '';
   }

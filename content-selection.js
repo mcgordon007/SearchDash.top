@@ -57,10 +57,10 @@
     if (!toolbar) return;
     toolbar.innerHTML = '';
 
-    // Show only enabled engines, max 6 for free users
+    // Show only enabled engines, max 8 for pro / max 5 for free
     const displayEngines = isPro
       ? engines.slice(0, 8)
-      : engines.slice(0, 6);
+      : engines.slice(0, 5);
 
     displayEngines.forEach(engine => {
       const btn = document.createElement('button');

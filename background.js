@@ -434,7 +434,6 @@ async function createCheckout() {
       createdAt: new Date().toISOString()
     };
     await chrome.storage.sync.set({ [STORAGE_KEY_PENDING_CHECKOUTS]: pending });
-    console.log('Stored pending checkout:', data.id);
 
     return { success: true, checkoutUrl: data.checkout_url, checkoutId: data.id };
   } catch (error) {
@@ -474,7 +473,6 @@ async function fetchCheckoutDetails(checkoutId) {
     }
 
     const data = await response.json();
-    console.log('Checkout details:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
     console.error('Error fetching checkout details:', error);
@@ -495,7 +493,6 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     return { success: false, licenseKey: null, message: 'Missing checkout ID.' };
   }
 
-  console.log('Fetching checkout details for:', checkoutId);
   const checkout = await fetchCheckoutDetails(checkoutId);
 
   if (!checkout) {
@@ -506,6 +503,13 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     return { success: false, licenseKey: null, message: 'Payment not yet completed. Please complete payment first.' };
   }
 
+  // Security: verify the checkout belongs to our product to prevent spoofed messages
+  const checkoutProductId = checkout.product_id || (checkout.order && checkout.order.product_id);
+  if (checkoutProductId && checkoutProductId !== CREEM_PRODUCT_ID) {
+    console.warn('Product ID mismatch — possible spoofed activation attempt');
+    return { success: false, licenseKey: null, message: 'Invalid product. Please contact support.' };
+  }
+
   const licenseKey = checkout.license_keys && checkout.license_keys.length > 0
     ? checkout.license_keys[0].key
     : null;
@@ -514,8 +518,6 @@ async function handlePaymentSuccess({ checkoutId, orderId }) {
     console.error('No license key in completed checkout:', JSON.stringify(checkout));
     return { success: false, licenseKey: null, message: 'No license key found in order. Please check your Creem Dashboard.' };
   }
-
-  console.log('Got license key, saving locally...');
 
   // Key is confirmed valid (from completed Creem checkout). Save locally.
   // No need to call /activate — it would fail if activation_limit is reached.
