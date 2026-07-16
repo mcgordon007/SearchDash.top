@@ -1,11 +1,10 @@
 /**
  * SearchDash - Text Selection Floating Toolbar
- * Shows a floating search toolbar when text is selected on any page
+ * Shows a floating search toolbar with engine names when text is selected on any page
  */
 (function() {
   'use strict';
 
-  const EXTENSION_ID = 'mpjpfdlbhfcejfmaafccigkhcdfclfoi';
   let toolbar = null;
   let engines = [];
   let isPro = false;
@@ -40,8 +39,8 @@
       border: 1px solid #e2e8f0;
       border-radius: 10px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      padding: 6px;
-      gap: 4px;
+      padding: 6px 8px;
+      gap: 6px;
       align-items: center;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       user-select: none;
@@ -52,37 +51,43 @@
     document.body.appendChild(toolbar);
   }
 
-  // ── Render engine buttons ──
+  // ── Render engine buttons with full names ──
   function renderButtons() {
     if (!toolbar) return;
     toolbar.innerHTML = '';
 
     // Show only enabled engines, max 8 for pro / max 5 for free
-    const displayEngines = isPro
-      ? engines.slice(0, 8)
-      : engines.slice(0, 5);
+    const maxEngines = isPro ? 8 : 5;
+    const displayEngines = engines.slice(0, maxEngines);
 
     displayEngines.forEach(engine => {
       const btn = document.createElement('button');
-      btn.textContent = engine.name.charAt(0);
+      btn.textContent = engine.name;
       btn.title = 'Search ' + engine.name;
       btn.style.cssText = `
-        width: 32px;
-        height: 32px;
-        border: none;
+        padding: 5px 10px;
+        border: 1px solid #e2e8f0;
         border-radius: 6px;
         cursor: pointer;
-        font-size: 13px;
-        font-weight: 700;
-        color: #fff;
-        background: #3b82f6;
-        transition: transform 0.1s, opacity 0.1s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: #1e293b;
+        background: #f8fafc;
+        white-space: nowrap;
+        transition: background 0.1s, border-color 0.1s;
       `;
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = '#eff6ff';
+        btn.style.borderColor = '#3b82f6';
+        btn.style.color = '#3b82f6';
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = '#f8fafc';
+        btn.style.borderColor = '#e2e8f0';
+        btn.style.color = '#1e293b';
+      });
       btn.addEventListener('mousedown', (e) => {
-        e.preventDefault();
+        // Stop propagation so the document mousedown doesn't hide the toolbar
         e.stopPropagation();
       });
       btn.addEventListener('click', (e) => {
@@ -96,6 +101,9 @@
           engineId: engine.id,
           query
         }, () => {
+          if (chrome.runtime.lastError) {
+            console.warn('SearchDash: search failed -', chrome.runtime.lastError.message);
+          }
           hideToolbar();
         });
       });
@@ -107,20 +115,26 @@
     moreBtn.textContent = '+';
     moreBtn.title = 'Open SearchDash';
     moreBtn.style.cssText = `
-      width: 32px;
-      height: 32px;
-      border: none;
+      padding: 5px 8px;
+      border: 1px solid #e2e8f0;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
       color: #64748b;
       background: #f1f5f9;
-      transition: transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      white-space: nowrap;
+      transition: background 0.1s;
     `;
+    moreBtn.addEventListener('mouseenter', () => {
+      moreBtn.style.background = '#e2e8f0';
+    });
+    moreBtn.addEventListener('mouseleave', () => {
+      moreBtn.style.background = '#f1f5f9';
+    });
+    moreBtn.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
     moreBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
