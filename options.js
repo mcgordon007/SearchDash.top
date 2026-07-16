@@ -1,486 +1,235 @@
 /**
- * SearchDash - Options Page Script
- * ======================================
- * Features:
- * 1. View, add, edit, and delete search engines
- * 2. Drag-and-drop reorder search engines
- * 3. Modify general settings
- * 4. Reset to default settings
+ * SearchDash - Options Page
+ * Category display, dark mode, engine management
  */
+document.addEventListener('DOMContentLoaded', async () => {
+  const engineListEl = document.getElementById('engineList');
+  const proCountEl = document.getElementById('proCount');
+  const proBarFillEl = document.getElementById('proBarFill');
+  const upgradeBtn = document.getElementById('upgradeBtn');
+  const saveAllBtn = document.getElementById('saveAllBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const statusMessage = document.getElementById('statusMessage');
+  const darkToggle = document.getElementById('darkToggle');
+  const settingOpenInNewTab = document.getElementById('settingOpenInNewTab');
+  const settingShowContextMenu = document.getElementById('settingShowContextMenu');
+  const settingDefaultEngine = document.getElementById('settingDefaultEngine');
 
-// Current search engine list (in-memory, saved on explicit save)
-let currentEngines = [];
-// Current settings
-let currentSettings = {};
-// Pro status
-let isPro = false;
+  const FREE_ENGINE_LIMIT = 5;
+  let engines = [];
+  let categories = [];
+  let isProUser = false;
 
-// Free tier limit
-const FREE_ENGINE_LIMIT = 5;
-
-// DOM element references
-const engineListEl = document.getElementById('engineList');
-const addEngineForm = document.getElementById('addEngineForm');
-const settingsForm = document.getElementById('settingsForm');
-const saveAllBtn = document.getElementById('saveAllBtn');
-const resetBtn = document.getElementById('resetBtn');
-const statusMessageEl = document.getElementById('statusMessage');
-
-// Default search engines (used when resetting)
-const DEFAULT_ENGINES = [
-  {
-    id: 'google',
-    name: 'Google',
-    url: 'https://www.google.com/search?q={searchTerms}',
-    shortcut: 'g',
-    enabled: true
-  },
-  {
-    id: 'bing',
-    name: 'Bing',
-    url: 'https://www.bing.com/search?q={searchTerms}',
-    shortcut: 'b',
-    enabled: true
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    url: 'https://www.youtube.com/results?search_query={searchTerms}',
-    shortcut: 'y',
-    enabled: true
-  },
-  {
-    id: 'github',
-    name: 'GitHub',
-    url: 'https://github.com/search?q={searchTerms}',
-    shortcut: 'gh',
-    enabled: true
-  },
-  {
-    id: 'stackoverflow',
-    name: 'Stack Overflow',
-    url: 'https://stackoverflow.com/search?q={searchTerms}',
-    shortcut: 'so',
-    enabled: true
-  },
-  {
-    id: 'wikipedia',
-    name: 'Wikipedia',
-    url: 'https://en.wikipedia.org/w/index.php?search={searchTerms}',
-    shortcut: 'w',
-    enabled: false
-  },
-  {
-    id: 'reddit',
-    name: 'Reddit',
-    url: 'https://www.reddit.com/search/?q={searchTerms}',
-    shortcut: 'r',
-    enabled: false
-  },
-  {
-    id: 'duckduckgo',
-    name: 'DuckDuckGo',
-    url: 'https://duckduckgo.com/?q={searchTerms}',
-    shortcut: 'ddg',
-    enabled: false
-  },
-  {
-    id: 'amazon',
-    name: 'Amazon',
-    url: 'https://www.amazon.com/s?k={searchTerms}',
-    shortcut: 'a',
-    enabled: false
-  },
-  {
-    id: 'x',
-    name: 'X (Twitter)',
-    url: 'https://x.com/search?q={searchTerms}&src=typed_query',
-    shortcut: 'x',
-    enabled: false
-  }
-];
-
-const DEFAULT_SETTINGS = {
-  openInNewTab: true,
-  showContextMenu: true,
-  defaultEngine: 'google'
-};
-
-// ==================== Utility Functions ====================
-
-/**
- * Generate a unique ID
- */
-function generateId() {
-  return 'engine_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
-}
-
-/**
- * Show a status toast message
- */
-function showStatus(message) {
-  statusMessageEl.textContent = message;
-  statusMessageEl.classList.add('show');
-  setTimeout(() => {
-    statusMessageEl.classList.remove('show');
-  }, 2000);
-}
-
-// ==================== Render Functions ====================
-
-/**
- * Render the search engine list
- */
-function renderEngineList() {
-  if (currentEngines.length === 0) {
-    engineListEl.innerHTML = '<div class="empty-state">No search engines yet. Add one above.</div>';
-    return;
+  // ── Dark Mode ──
+  function initDarkMode() {
+    chrome.storage.sync.get(['darkMode'], (result) => {
+      applyDarkMode(result.darkMode === true);
+    });
   }
 
-  engineListEl.innerHTML = '';
+  function applyDarkMode(dark) {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    darkToggle.textContent = dark ? '☀️' : '🌙';
+  }
 
-  currentEngines.forEach((engine, index) => {
-    const isLocked = !isPro && index >= FREE_ENGINE_LIMIT;
-    const item = document.createElement('div');
-    item.className = 'engine-item' + (isLocked ? ' engine-locked' : '');
-    item.dataset.index = index;
+  darkToggle.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') === 'dark';
+    const next = !current;
+    applyDarkMode(next);
+    chrome.storage.sync.set({ darkMode: next });
+  });
+  initDarkMode();
 
-    // Only allow drag & drop for Pro users
-    if (isPro) {
-      item.draggable = true;
-    }
+  // ── Load Data ──
+  chrome.runtime.sendMessage({ type: 'getCategories' }, (catResp) => {
+    if (catResp && catResp.success) categories = catResp.data;
 
-    const iconClass = `engine-icon ${engine.id}`;
-    const iconText = engine.name.charAt(0);
-
-    const dragHandleHtml = isPro
-      ? '<span class="drag-handle">⋮⋮</span>'
-      : '<span class="drag-handle disabled" title="Upgrade to Pro to reorder">⋮⋮</span>';
-
-    const proBadgeHtml = isLocked
-      ? '<span class="pro-badge">🔒 Pro</span>'
-      : '';
-
-    item.innerHTML = `
-      ${dragHandleHtml}
-      <div class="engine-info">
-        <span class="${iconClass}">${iconText}</span>
-        <div class="engine-details">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="engine-name">${escapeHtml(engine.name)}</span>
-            ${engine.shortcut ? `<span class="engine-shortcut">${escapeHtml(engine.shortcut)}</span>` : ''}
-            ${proBadgeHtml}
-          </div>
-          <div class="engine-url">${escapeHtml(engine.url)}</div>
-        </div>
-      </div>
-      <div class="engine-actions">
-        <label class="checkbox-group">
-          <input type="checkbox" class="engine-enabled" ${engine.enabled ? 'checked' : ''} ${isLocked ? 'disabled' : ''}>
-          <span style="font-size: 12px;">Enabled</span>
-        </label>
-        ${isLocked ? '<span class="locked-hint">Unlock with Pro</span>' : '<button class="button button-danger button-sm delete-btn">Delete</button>'}
-      </div>
-    `;
-
-    // Enable/disable toggle
-    const enabledCheckbox = item.querySelector('.engine-enabled');
-    if (!isLocked) {
-      enabledCheckbox.addEventListener('change', () => {
-        engine.enabled = enabledCheckbox.checked;
-        updateDefaultEngineOptions();
+    chrome.runtime.sendMessage({ type: 'getEngines' }, (engResp) => {
+      if (engResp && engResp.success) engines = engResp.data;
+      chrome.runtime.sendMessage({ type: 'isPro' }, (proResp) => {
+        isProUser = proResp && proResp.success && proResp.data;
+        renderAll();
       });
-    }
+    });
+  });
 
-    // Delete button
-    const deleteBtn = item.querySelector('.delete-btn');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => {
-        const confirmDelete = confirm(`Are you sure you want to delete "${engine.name}"?`);
-        if (confirmDelete) {
-          currentEngines.splice(index, 1);
-          renderEngineList();
-          updateDefaultEngineOptions();
+  // ── Render ──
+  function renderAll() {
+    renderEngineList();
+    updateProBar();
+    updateUpgradeButton();
+    loadSettings();
+  }
+
+  function getCategoryLabel(catId) {
+    const cat = categories.find(c => c.id === catId);
+    return cat ? cat.label : catId;
+  }
+
+  function renderEngineList() {
+    engineListEl.innerHTML = '';
+    const enabledCount = engines.filter(e => e.enabled).length;
+
+    // Group by category
+    const grouped = {};
+    engines.forEach(e => {
+      const cat = e.category || 'general';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(e);
+    });
+
+    categories.forEach(cat => {
+      const catEngines = grouped[cat.id] || [];
+      if (catEngines.length === 0) return;
+
+      const catHeader = document.createElement('div');
+      catHeader.className = 'category-header';
+      catHeader.textContent = cat.label;
+      engineListEl.appendChild(catHeader);
+
+      catEngines.forEach((engine, idx) => {
+        const isBeyondFreeLimit = !isProUser && enabledCount >= FREE_ENGINE_LIMIT && !engine.enabled;
+        const isLocked = !engine.enabled && isBeyondFreeLimit;
+
+        const item = document.createElement('div');
+        item.className = 'engine-item' + (isLocked ? ' locked' : '');
+        item.innerHTML = `
+          <span class="drag-handle">⋮⋮</span>
+          <div class="engine-icon ${engineIdToIconClass(engine.id)}">${engine.name.charAt(0)}</div>
+          <div class="engine-info">
+            <div class="engine-name">${engine.name}</div>
+            <div class="engine-url">${engine.url}</div>
+          </div>
+          <span class="engine-shortcut">${engine.shortcut}</span>
+          ${isLocked ? '<span class="pro-badge">PRO</span>' : ''}
+          <button class="engine-toggle ${engine.enabled ? 'on' : ''}" data-engine-id="${engine.id}"></button>
+        `;
+
+        const toggleBtn = item.querySelector('.engine-toggle');
+        toggleBtn.addEventListener('click', () => {
+          if (isLocked) {
+            if (isProUser) {
+              // Pro user can toggle any engine
+              engine.enabled = true;
+              renderAll();
+            } else {
+              // Free user — prompt upgrade
+              chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
+            }
+            return;
+          }
+          engine.enabled = !engine.enabled;
+          renderAll();
+        });
+
+        engineListEl.appendChild(item);
+      });
+    });
+  }
+
+  function updateProBar() {
+    const enabledCount = engines.filter(e => e.enabled).length;
+    proCountEl.textContent = `${enabledCount}/${isProUser ? engines.length : FREE_ENGINE_LIMIT} engines enabled`;
+    const pct = isProUser ? (enabledCount / engines.length * 100) : (enabledCount / FREE_ENGINE_LIMIT * 100);
+    proBarFillEl.style.width = Math.min(pct, 100) + '%';
+  }
+
+  function updateUpgradeButton() {
+    if (isProUser) {
+      upgradeBtn.textContent = 'Pro Active';
+      upgradeBtn.classList.add('pro-active');
+      upgradeBtn.disabled = true;
+    } else {
+      upgradeBtn.textContent = 'Upgrade to Pro';
+      upgradeBtn.classList.remove('pro-active');
+      upgradeBtn.disabled = false;
+    }
+  }
+
+  upgradeBtn.addEventListener('click', () => {
+    if (!isProUser) {
+      chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
+    }
+  });
+
+  // ── Settings ──
+  function loadSettings() {
+    chrome.runtime.sendMessage({ type: 'getSettings' }, (resp) => {
+      if (!resp || !resp.success) return;
+      const settings = resp.data;
+      settingOpenInNewTab.checked = settings.openInNewTab !== false;
+      settingShowContextMenu.checked = settings.showContextMenu !== false;
+
+      // Populate default engine dropdown
+      settingDefaultEngine.innerHTML = '';
+      engines.forEach(e => {
+        const opt = document.createElement('option');
+        opt.value = e.id;
+        opt.textContent = e.name;
+        if (e.id === settings.defaultEngine) opt.selected = true;
+        settingDefaultEngine.appendChild(opt);
+      });
+    });
+  }
+
+  settingOpenInNewTab.addEventListener('change', () => autoSaveSettings());
+  settingShowContextMenu.addEventListener('change', () => autoSaveSettings());
+  settingDefaultEngine.addEventListener('change', () => autoSaveSettings());
+
+  async function autoSaveSettings() {
+    const settings = {
+      openInNewTab: settingOpenInNewTab.checked,
+      showContextMenu: settingShowContextMenu.checked,
+      defaultEngine: settingDefaultEngine.value
+    };
+    chrome.runtime.sendMessage({ type: 'saveSettings', settings }, () => {
+      chrome.runtime.sendMessage({ type: 'rebuildContextMenus' });
+    });
+  }
+
+  // ── Save All ──
+  saveAllBtn.addEventListener('click', () => {
+    autoSaveSettings();
+    chrome.runtime.sendMessage({ type: 'saveEngines', engines }, () => {
+      showToast('Settings saved successfully!');
+      renderAll();
+    });
+  });
+
+  // ── Reset ──
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('Reset all engines and settings to defaults? This cannot be undone.')) return;
+    chrome.runtime.sendMessage({ type: 'resetDefaults' }, () => {
+      chrome.runtime.sendMessage({ type: 'getEngines' }, (resp) => {
+        if (resp && resp.success) {
+          engines = resp.data;
+          renderAll();
+          loadSettings();
         }
       });
-    }
-
-    // Drag-and-drop events (only for Pro)
-    if (isPro) {
-      item.addEventListener('dragstart', handleDragStart);
-      item.addEventListener('dragenter', handleDragEnter);
-      item.addEventListener('dragover', handleDragOver);
-      item.addEventListener('dragleave', handleDragLeave);
-      item.addEventListener('drop', handleDrop);
-      item.addEventListener('dragend', handleDragEnd);
-    }
-
-    engineListEl.appendChild(item);
-  });
-
-  updateDefaultEngineOptions();
-  updateProFeatureUI();
-}
-
-/**
- * Update the default engine dropdown options
- */
-function updateDefaultEngineOptions() {
-  const selectEl = document.getElementById('settingDefaultEngine');
-  const enabledEngines = currentEngines.filter(e => e.enabled);
-
-  selectEl.innerHTML = '';
-  enabledEngines.forEach(engine => {
-    const option = document.createElement('option');
-    option.value = engine.id;
-    option.textContent = engine.name;
-    if (engine.id === currentSettings.defaultEngine) {
-      option.selected = true;
-    }
-    selectEl.appendChild(option);
-  });
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// ==================== Drag-and-Drop Implementation ====================
-
-let dragIndex = null;
-
-function handleDragStart(e) {
-  dragIndex = parseInt(this.dataset.index);
-  e.dataTransfer.effectAllowed = 'move';
-  e.dataTransfer.setData('text/html', this.innerHTML);
-}
-
-function handleDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  return false;
-}
-
-function handleDragEnter(e) {
-  const item = e.currentTarget;
-  const enterIndex = parseInt(item.dataset.index);
-  if (enterIndex !== dragIndex) {
-    item.classList.add('drag-over');
-  }
-}
-
-function handleDragLeave(e) {
-  e.currentTarget.classList.remove('drag-over');
-}
-
-function handleDrop(e) {
-  e.stopPropagation();
-  const dropIndex = parseInt(this.dataset.index);
-
-  if (dragIndex !== dropIndex) {
-    const dragged = currentEngines[dragIndex];
-    currentEngines.splice(dragIndex, 1);
-    currentEngines.splice(dropIndex, 0, dragged);
-    renderEngineList();
-  }
-
-  this.classList.remove('drag-over');
-  return false;
-}
-
-function handleDragEnd() {
-  dragIndex = null;
-  document.querySelectorAll('.engine-item').forEach(item => {
-    item.classList.remove('drag-over');
-  });
-}
-
-// ==================== Add Search Engine ====================
-
-addEngineForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  // Check free tier limit
-  if (!isPro && currentEngines.length >= FREE_ENGINE_LIMIT) {
-    alert(`Free version supports up to ${FREE_ENGINE_LIMIT} search engines. Upgrade to Pro for unlimited engines.`);
-    return;
-  }
-
-  const name = document.getElementById('engineName').value.trim();
-  const shortcut = document.getElementById('engineShortcut').value.trim();
-  const url = document.getElementById('engineUrl').value.trim();
-  const enabled = document.getElementById('engineEnabled').checked;
-
-  if (!name || !url) {
-    alert('Name and URL are required.');
-    return;
-  }
-
-  if (!url.includes('{searchTerms}')) {
-    alert('URL must contain the {searchTerms} placeholder.');
-    return;
-  }
-
-  const newEngine = {
-    id: name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, ''),
-    name,
-    url,
-    shortcut,
-    enabled
-  };
-
-  // If generated ID already exists, append random suffix
-  if (currentEngines.some(e => e.id === newEngine.id)) {
-    newEngine.id = generateId();
-  }
-
-  currentEngines.push(newEngine);
-  renderEngineList();
-  updateDefaultEngineOptions();
-
-  // Reset form
-  addEngineForm.reset();
-  document.getElementById('engineEnabled').checked = true;
-});
-
-// ==================== Save Settings ====================
-
-saveAllBtn.addEventListener('click', () => {
-  const openInNewTab = document.getElementById('settingOpenInNewTab').checked;
-  const showContextMenu = document.getElementById('settingShowContextMenu').checked;
-  const defaultEngine = document.getElementById('settingDefaultEngine').value;
-
-  const settings = {
-    openInNewTab,
-    showContextMenu,
-    defaultEngine: defaultEngine || (currentEngines[0]?.id || '')
-  };
-
-  chrome.runtime.sendMessage({ type: 'updateEngines', engines: currentEngines }, () => {
-    chrome.runtime.sendMessage({ type: 'updateSettings', settings }, () => {
-      currentSettings = settings;
-      showStatus('All settings saved');
+      showToast('Restored to defaults');
     });
   });
-});
 
-// ==================== Restore Defaults ====================
+  // ── Toast ──
+  function showToast(msg, isError) {
+    statusMessage.textContent = msg;
+    statusMessage.classList.toggle('error', isError);
+    statusMessage.classList.add('show');
+    setTimeout(() => statusMessage.classList.remove('show'), 2500);
+  }
 
-resetBtn.addEventListener('click', () => {
-  const confirmReset = confirm('Are you sure you want to restore default settings? This will overwrite all your search engine configurations.');
-  if (confirmReset) {
-    currentEngines = JSON.parse(JSON.stringify(DEFAULT_ENGINES));
-    currentSettings = { ...DEFAULT_SETTINGS };
-    renderEngineList();
-    loadSettingsToForm();
-    showStatus('Defaults restored. Click "Save All Settings" to confirm.');
+  // ── Helpers ──
+  function engineIdToIconClass(id) {
+    const map = {
+      google: 'google', bing: 'bing', duckduckgo: 'duckduckgo', github: 'github',
+      stackoverflow: 'stackoverflow', wikipedia: 'wikipedia', reddit: 'reddit',
+      amazon: 'amazon', youtube: 'youtube', x: 'x', yahoo: 'yahoo', brave: 'brave',
+      mdn: 'mdn', npm: 'npm', pypi: 'pypi', quora: 'quora', wolfram: 'wolfram',
+      ebay: 'ebay', etsy: 'etsy', walmart: 'walmart', vimeo: 'vimeo', twitch: 'twitch',
+      linkedin: 'linkedin', facebook: 'facebook', perplexity: 'perplexity',
+      chatgpt: 'chatgpt', gemini: 'gemini'
+    };
+    return map[id] ? 'engine-icon ' + map[id] : '';
   }
 });
-
-// ==================== Load Settings ====================
-
-function loadSettingsToForm() {
-  document.getElementById('settingOpenInNewTab').checked = currentSettings.openInNewTab;
-  document.getElementById('settingShowContextMenu').checked = currentSettings.showContextMenu;
-  updateDefaultEngineOptions();
-}
-
-function loadData() {
-  chrome.runtime.sendMessage({ type: 'getEngines' }, (engineResponse) => {
-    if (engineResponse && engineResponse.success) {
-      currentEngines = engineResponse.data;
-      renderEngineList();
-    } else {
-      currentEngines = DEFAULT_ENGINES;
-      renderEngineList();
-    }
-
-    chrome.runtime.sendMessage({ type: 'getSettings' }, (settingsResponse) => {
-      if (settingsResponse && settingsResponse.success) {
-        currentSettings = settingsResponse.data;
-      } else {
-        currentSettings = DEFAULT_SETTINGS;
-      }
-      loadSettingsToForm();
-    });
-  });
-}
-
-// Load data on page load
-document.addEventListener('DOMContentLoaded', () => {
-  // Check if user is Pro
-  chrome.runtime.sendMessage({ type: 'isPro' }, (response) => {
-    if (response && response.success) {
-      isPro = response.data;
-      updateProFeatureUI();
-    }
-
-    loadData();
-  });
-});
-
-/**
- * Update UI to reflect Pro/Free state
- */
-function updateProFeatureUI() {
-  const enabledCount = currentEngines.filter(e => e.enabled).length;
-  const addBtn = document.querySelector('#addEngineForm button[type="submit"]');
-
-  if (!isPro) {
-    // Update quota display
-    let quotaEl = document.getElementById('engineQuota');
-    if (!quotaEl) {
-      quotaEl = document.createElement('div');
-      quotaEl.id = 'engineQuota';
-      quotaEl.className = 'quota-bar';
-      const sectionTitle = document.querySelector('.section:nth-child(2) .section-title');
-      if (sectionTitle) {
-        sectionTitle.parentNode.insertBefore(quotaEl, sectionTitle.nextSibling);
-      }
-    }
-    const remaining = Math.max(0, FREE_ENGINE_LIMIT - enabledCount);
-    quotaEl.innerHTML = `
-      <span class="quota-text">${enabledCount} / ${FREE_ENGINE_LIMIT} engines used</span>
-      <a href="#" class="quota-upgrade" id="quotaUpgradeLink">Upgrade to Pro for unlimited →</a>
-    `;
-    quotaEl.style.display = 'flex';
-
-    // Bind upgrade link
-    const upgradeLink = document.getElementById('quotaUpgradeLink');
-    if (upgradeLink) {
-      upgradeLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
-      });
-    }
-
-    // Disable add button at limit
-    if (enabledCount >= FREE_ENGINE_LIMIT) {
-      addBtn.type = 'button'; // prevent form submission
-      addBtn.textContent = 'Upgrade to Pro to Add More';
-      addBtn.classList.add('button-upgrade');
-      addBtn.onclick = function(e) {
-        e.preventDefault();
-        chrome.tabs.create({ url: chrome.runtime.getURL('purchase.html') });
-      };
-    } else {
-      addBtn.type = 'submit';
-      addBtn.textContent = 'Add Engine';
-      addBtn.classList.remove('button-upgrade');
-      addBtn.onclick = null;
-    }
-  } else {
-    // Pro user: hide quota bar, always enable add
-    const quotaEl = document.getElementById('engineQuota');
-    if (quotaEl) quotaEl.style.display = 'none';
-    addBtn.type = 'submit';
-    addBtn.textContent = 'Add Engine';
-    addBtn.classList.remove('button-upgrade');
-    addBtn.onclick = null;
-  }
-}

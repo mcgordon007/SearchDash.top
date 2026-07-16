@@ -8,79 +8,62 @@
  * 4. Provide storage read/write for search engine data
  */
 
+// ==================== Categories ====================
+const ENGINE_CATEGORIES = [
+  { id: 'general', label: 'General', icon: 'G' },
+  { id: 'dev', label: 'Dev', icon: 'D' },
+  { id: 'knowledge', label: 'Knowledge', icon: 'K' },
+  { id: 'shopping', label: 'Shopping', icon: 'S' },
+  { id: 'video', label: 'Video', icon: 'V' },
+  { id: 'social', label: 'Social', icon: 'S' },
+  { id: 'ai', label: 'AI', icon: 'A' }
+];
+
 // ==================== Default Search Engines ====================
 // URL templates use {searchTerms} as the placeholder for search keywords
+// category: one of the ENGINE_CATEGORIES ids
+// First 5 are enabled by default (free tier), rest require Pro
 const DEFAULT_ENGINES = [
-  {
-    id: 'google',
-    name: 'Google',
-    url: 'https://www.google.com/search?q={searchTerms}',
-    shortcut: 'g',
-    enabled: true
-  },
-  {
-    id: 'bing',
-    name: 'Bing',
-    url: 'https://www.bing.com/search?q={searchTerms}',
-    shortcut: 'b',
-    enabled: true
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    url: 'https://www.youtube.com/results?search_query={searchTerms}',
-    shortcut: 'y',
-    enabled: true
-  },
-  {
-    id: 'github',
-    name: 'GitHub',
-    url: 'https://github.com/search?q={searchTerms}',
-    shortcut: 'gh',
-    enabled: true
-  },
-  {
-    id: 'stackoverflow',
-    name: 'Stack Overflow',
-    url: 'https://stackoverflow.com/search?q={searchTerms}',
-    shortcut: 'so',
-    enabled: true
-  },
-  {
-    id: 'wikipedia',
-    name: 'Wikipedia',
-    url: 'https://en.wikipedia.org/w/index.php?search={searchTerms}',
-    shortcut: 'w',
-    enabled: false
-  },
-  {
-    id: 'reddit',
-    name: 'Reddit',
-    url: 'https://www.reddit.com/search/?q={searchTerms}',
-    shortcut: 'r',
-    enabled: false
-  },
-  {
-    id: 'duckduckgo',
-    name: 'DuckDuckGo',
-    url: 'https://duckduckgo.com/?q={searchTerms}',
-    shortcut: 'ddg',
-    enabled: false
-  },
-  {
-    id: 'amazon',
-    name: 'Amazon',
-    url: 'https://www.amazon.com/s?k={searchTerms}',
-    shortcut: 'a',
-    enabled: false
-  },
-  {
-    id: 'x',
-    name: 'X (Twitter)',
-    url: 'https://x.com/search?q={searchTerms}&src=typed_query',
-    shortcut: 'x',
-    enabled: false
-  }
+  // General
+  { id: 'google', name: 'Google', url: 'https://www.google.com/search?q={searchTerms}', shortcut: 'g', category: 'general', enabled: true },
+  { id: 'bing', name: 'Bing', url: 'https://www.bing.com/search?q={searchTerms}', shortcut: 'b', category: 'general', enabled: true },
+  { id: 'duckduckgo', name: 'DuckDuckGo', url: 'https://duckduckgo.com/?q={searchTerms}', shortcut: 'ddg', category: 'general', enabled: true },
+  { id: 'yahoo', name: 'Yahoo', url: 'https://search.yahoo.com/search?p={searchTerms}', shortcut: 'yh', category: 'general', enabled: false },
+  { id: 'brave', name: 'Brave Search', url: 'https://search.brave.com/search?q={searchTerms}', shortcut: 'br', category: 'general', enabled: false },
+
+  // Dev
+  { id: 'github', name: 'GitHub', url: 'https://github.com/search?q={searchTerms}', shortcut: 'gh', category: 'dev', enabled: true },
+  { id: 'stackoverflow', name: 'Stack Overflow', url: 'https://stackoverflow.com/search?q={searchTerms}', shortcut: 'so', category: 'dev', enabled: true },
+  { id: 'mdn', name: 'MDN Web Docs', url: 'https://developer.mozilla.org/en-US/search?q={searchTerms}', shortcut: 'mdn', category: 'dev', enabled: false },
+  { id: 'npm', name: 'npm', url: 'https://www.npmjs.com/search?q={searchTerms}', shortcut: 'npm', category: 'dev', enabled: false },
+  { id: 'pypi', name: 'PyPI', url: 'https://pypi.org/search/?q={searchTerms}', shortcut: 'py', category: 'dev', enabled: false },
+
+  // Knowledge
+  { id: 'wikipedia', name: 'Wikipedia', url: 'https://en.wikipedia.org/w/index.php?search={searchTerms}', shortcut: 'w', category: 'knowledge', enabled: false },
+  { id: 'reddit', name: 'Reddit', url: 'https://www.reddit.com/search/?q={searchTerms}', shortcut: 'r', category: 'knowledge', enabled: false },
+  { id: 'quora', name: 'Quora', url: 'https://www.quora.com/search?q={searchTerms}', shortcut: 'q', category: 'knowledge', enabled: false },
+  { id: 'wolfram', name: 'Wolfram Alpha', url: 'https://www.wolframalpha.com/input?i={searchTerms}', shortcut: 'wa', category: 'knowledge', enabled: false },
+
+  // Shopping
+  { id: 'amazon', name: 'Amazon', url: 'https://www.amazon.com/s?k={searchTerms}', shortcut: 'a', category: 'shopping', enabled: false },
+  { id: 'ebay', name: 'eBay', url: 'https://www.ebay.com/sch/i.html?_nkw={searchTerms}', shortcut: 'eb', category: 'shopping', enabled: false },
+  { id: 'etsy', name: 'Etsy', url: 'https://www.etsy.com/search?q={searchTerms}', shortcut: 'et', category: 'shopping', enabled: false },
+  { id: 'walmart', name: 'Walmart', url: 'https://www.walmart.com/search?q={searchTerms}', shortcut: 'wm', category: 'shopping', enabled: false },
+
+  // Video
+  { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/results?search_query={searchTerms}', shortcut: 'y', category: 'video', enabled: false },
+  { id: 'vimeo', name: 'Vimeo', url: 'https://vimeo.com/search?q={searchTerms}', shortcut: 'vm', category: 'video', enabled: false },
+  { id: 'twitch', name: 'Twitch', url: 'https://www.twitch.tv/search?term={searchTerms}', shortcut: 'tw', category: 'video', enabled: false },
+
+  // Social
+  { id: 'x', name: 'X (Twitter)', url: 'https://x.com/search?q={searchTerms}&src=typed_query', shortcut: 'x', category: 'social', enabled: false },
+  { id: 'linkedin', name: 'LinkedIn', url: 'https://www.linkedin.com/search/results/all/?keywords={searchTerms}', shortcut: 'li', category: 'social', enabled: false },
+  { id: 'facebook', name: 'Facebook', url: 'https://www.facebook.com/search/top/?q={searchTerms}', shortcut: 'fb', category: 'social', enabled: false },
+
+  // AI
+  { id: 'perplexity', name: 'Perplexity', url: 'https://www.perplexity.ai/search?q={searchTerms}', shortcut: 'pp', category: 'ai', enabled: false },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chatgpt.com/?q={searchTerms}', shortcut: 'cg', category: 'ai', enabled: false },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/search?q={searchTerms}', shortcut: 'gm', category: 'ai', enabled: false }
 ];
 
 // Storage keys
@@ -622,6 +605,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         case 'getEngines': {
           const engines = await getEngines();
           sendResponse({ success: true, data: engines });
+          break;
+        }
+
+        case 'saveEngines': {
+          await saveEngines(message.engines);
+          await rebuildContextMenus();
+          sendResponse({ success: true });
+          break;
+        }
+
+        case 'resetDefaults': {
+          await chrome.storage.sync.remove(STORAGE_KEY_ENGINES);
+          await chrome.storage.sync.remove(STORAGE_KEY_SETTINGS);
+          await rebuildContextMenus();
+          sendResponse({ success: true });
+          break;
+        }
+
+        case 'getCategories': {
+          sendResponse({ success: true, data: ENGINE_CATEGORIES });
+          break;
+        }
+
+        case 'openPopupWithQuery': {
+          // Store the query temporarily so popup can pick it up
+          await chrome.storage.local.set({ pendingQuery: message.query || '' });
+          // Chrome doesn't support opening the popup programmatically,
+          // so we just store the query and let the user open it via shortcut
+          sendResponse({ success: true });
           break;
         }
 

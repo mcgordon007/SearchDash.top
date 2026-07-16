@@ -5,452 +5,386 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SearchDash</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
+    :root {
+      --bg: #ffffff;
+      --bg2: #f8fafc;
+      --bg3: #f1f5f9;
+      --ink: #1e293b;
+      --muted: #94a3b8;
+      --rule: #e2e8f0;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent2: #10b981;
+      --pro-bg: #fef3c7;
+      --pro-ink: #92400e;
+      --btn-bg: #f1f5f9;
+      --btn-hover: #e2e8f0;
+      --engine-bg: #ffffff;
+      --engine-hover: #f1f5f9;
+      --engine-border: #e2e8f0;
+      --engine-active: #eff6ff;
+      --engine-active-border: #3b82f6;
+      --tab-active-bg: #3b82f6;
+      --tab-active-ink: #ffffff;
+      --tab-bg: #f1f5f9;
+      --tab-ink: #64748b;
+      --shadow: 0 4px 24px rgba(0,0,0,0.12);
+      --icon-google: #ea4335;
+      --icon-bing: #00809d;
+      --icon-duckduckgo: #de5833;
+      --icon-github: #24292e;
+      --icon-reddit: #ff4500;
+      --icon-wikipedia: #000000;
+      --icon-amazon: #ff9900;
+      --icon-youtube: #ff0000;
+      --icon-x: #1da1f2;
+      --icon-ebay: #e53238;
+      --icon-stackoverflow: #f48225;
     }
+
+    [data-theme="dark"] {
+      --bg: #1e293b;
+      --bg2: #0f172a;
+      --bg3: #334155;
+      --ink: #f1f5f9;
+      --muted: #64748b;
+      --rule: #334155;
+      --accent: #60a5fa;
+      --accent-hover: #93bbfd;
+      --accent2: #34d399;
+      --pro-bg: #451a03;
+      --pro-ink: #fcd34d;
+      --btn-bg: #334155;
+      --btn-hover: #475569;
+      --engine-bg: #1e293b;
+      --engine-hover: #334155;
+      --engine-border: #334155;
+      --engine-active: #1e3a5f;
+      --engine-active-border: #60a5fa;
+      --tab-active-bg: #60a5fa;
+      --tab-active-ink: #0f172a;
+      --tab-bg: #334155;
+      --tab-ink: #94a3b8;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --icon-google: #ea4335;
+      --icon-bing: #00a4cc;
+      --icon-duckduckgo: #de5833;
+      --icon-github: #e6edf3;
+      --icon-reddit: #ff4500;
+      --icon-wikipedia: #e6edf3;
+      --icon-amazon: #ff9900;
+      --icon-youtube: #ff0000;
+      --icon-x: #1da1f2;
+      --icon-ebay: #e53238;
+      --icon-stackoverflow: #f48225;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      width: 320px;
-      min-height: 100px;
-      max-height: 500px;
-      background: #ffffff;
-      color: #1f2937;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      width: 380px;
+      min-height: 420px;
+      background: var(--bg);
+      color: var(--ink);
+      transition: background 0.2s, color 0.2s;
     }
 
-    .container {
-      padding: 16px;
-    }
-
+    /* ── Header ── */
     .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e5e7eb;
-    }
-
-    .title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #111827;
-    }
-
-    .header-actions {
+      padding: 12px 16px 8px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-
-    .multi-toggle {
-      font-size: 12px;
-      padding: 4px 10px;
-      border: 1px solid #d1d5db;
+    .header .logo {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .header .spacer { flex: 1; }
+    .header .icon-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
       border-radius: 6px;
-      background: #f9fafb;
-      color: #6b7280;
       cursor: pointer;
-      font-weight: 500;
+      background: var(--btn-bg);
+      color: var(--ink);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+    .header .icon-btn:hover { background: var(--btn-hover); }
+    .header .pro-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: var(--pro-bg);
+      color: var(--pro-ink);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    /* ── Search Input ── */
+    .search-area {
+      padding: 0 16px 8px;
+    }
+    .search-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      outline: none;
+      background: var(--bg2);
+      color: var(--ink);
+      transition: border-color 0.15s;
+    }
+    .search-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .search-input::placeholder { color: var(--muted); }
+
+    /* ── Category Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 16px 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab {
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      white-space: nowrap;
+      background: var(--tab-bg);
+      color: var(--tab-ink);
       transition: all 0.15s;
+    }
+    .tab:hover { background: var(--btn-hover); }
+    .tab.active {
+      background: var(--tab-active-bg);
+      color: var(--tab-active-ink);
+    }
+
+    /* ── Engine Grid ── */
+    .engine-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 0 16px 8px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .engine-grid.multi-mode {
+      max-height: 200px;
+    }
+    .engine-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 10px 6px;
+      border: 1px solid var(--engine-border);
+      border-radius: 10px;
+      cursor: pointer;
+      background: var(--engine-bg);
+      color: var(--ink);
+      transition: all 0.15s;
+      font-size: 11px;
+      font-weight: 500;
+      text-align: center;
+      position: relative;
+      min-height: 56px;
+      user-select: none;
+    }
+    .engine-btn:hover {
+      background: var(--engine-hover);
+      border-color: var(--accent);
+    }
+    .engine-btn.locked {
+      opacity: 0.45;
+      cursor: pointer;
+    }
+    .engine-btn.locked:hover {
+      opacity: 0.7;
+      border-color: var(--pro-ink);
+    }
+    .engine-btn .lock-icon {
+      position: absolute;
+      top: 3px;
+      right: 5px;
+      font-size: 9px;
+    }
+    .engine-btn .engine-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .engine-btn .engine-name {
+      line-height: 1.2;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .multi-toggle:hover {
-      border-color: #3b82f6;
-      color: #3b82f6;
+    .engine-btn.multi-selected {
+      background: var(--engine-active);
+      border-color: var(--engine-active-border);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .engine-btn.multi-selected::after {
+      content: '✓';
+      position: absolute;
+      top: 2px;
+      left: 6px;
+      font-size: 10px;
+      color: var(--accent);
+      font-weight: 700;
     }
 
-    .multi-toggle.active {
-      background: #eff6ff;
-      border-color: #3b82f6;
-      color: #3b82f6;
+    /* ── Action Bar ── */
+    .action-bar {
+      display: none;
+      padding: 0 16px 8px;
+      align-items: center;
+      gap: 8px;
     }
-
-    .multi-toggle.pro-locked {
+    .action-bar.visible { display: flex; }
+    .action-bar .multi-count {
+      font-size: 12px;
+      color: var(--muted);
+      flex: 1;
+    }
+    .action-bar .search-btn {
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .action-bar .search-btn:hover { background: var(--accent-hover); }
+    .action-bar .search-btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .multi-toggle.pro-locked:hover {
-      border-color: #d1d5db;
-      color: #6b7280;
-    }
-
-    .open-settings {
-      font-size: 13px;
-      color: #3b82f6;
-      text-decoration: none;
-      cursor: pointer;
-    }
-
-    .open-settings:hover {
-      text-decoration: underline;
-    }
-
-    /* Selected text display */
-    .selection-area {
-      margin-bottom: 12px;
-    }
-
-    .selection-label {
-      font-size: 12px;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-
-    #selectionText {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 13px;
-      background: #f9fafb;
-      color: #1f2937;
-      resize: none;
-      min-height: 44px;
-      line-height: 1.4;
-    }
-
-    #selectionText:focus {
-      outline: none;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    /* Search engine grid */
-    .engine-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-      max-height: 320px;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-
-    /* Scrollbar styling */
-    .engine-grid::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .engine-grid::-webkit-scrollbar-thumb {
-      background-color: #d1d5db;
-      border-radius: 2px;
-    }
-
-    .engine-button {
-      display: flex;
-      align-items: center;
-      padding: 10px 12px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      background: #ffffff;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .engine-button:hover {
-      background-color: #eff6ff;
-      border-color: #3b82f6;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .engine-button:active {
-      transform: translateY(0);
-    }
-
-    /* Multi-select mode */
-    .engine-button.multi-mode {
-      position: relative;
-      padding-left: 36px;
-    }
-
-    .engine-button.multi-mode.selected {
-      background-color: #eff6ff;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
-    }
-
-    .engine-checkbox {
-      position: absolute;
-      left: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 18px;
-      height: 18px;
-      border: 2px solid #d1d5db;
-      border-radius: 4px;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      transition: all 0.15s;
-    }
-
-    .engine-button.multi-mode.selected .engine-checkbox {
-      border-color: #3b82f6;
-      background: #3b82f6;
-    }
-
-    .engine-button.multi-mode.selected .engine-checkbox::after {
-      content: '';
-      width: 6px;
-      height: 10px;
-      border: solid #ffffff;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg) translateY(-1px);
-    }
-
-    .engine-icon {
-      width: 24px;
-      height: 24px;
-      margin-right: 10px;
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      color: #fff;
-      font-size: 12px;
-    }
-
-    /* Predefined colors for common search engines */
-    .engine-icon.google { background: #4285F4; }
-    .engine-icon.bing { background: #00897B; }
-    .engine-icon.youtube { background: #FF0000; }
-    .engine-icon.github { background: #24292F; }
-    .engine-icon.stackoverflow { background: #F48024; }
-    .engine-icon.wikipedia { background: #000000; }
-    .engine-icon.reddit { background: #FF4500; }
-    .engine-icon.duckduckgo { background: #DE5833; }
-    .engine-icon.amazon { background: #FF9900; }
-    .engine-icon.x { background: #000000; }
-
-    .engine-name {
-      font-size: 14px;
-      font-weight: 500;
-      color: #1f2937;
-      flex: 1;
-      text-align: left;
-    }
-
-    .shortcut {
-      font-size: 11px;
-      color: #9ca3af;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #f3f4f6;
-    }
-
-    /* Multi-search action bar */
-    .multi-action-bar {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #eff6ff, #f5f3ff);
-      border: 1px solid #bfdbfe;
-      border-radius: 8px;
-    }
-
-    .multi-action-bar.visible {
-      display: flex;
-    }
-
-    .multi-count {
-      font-size: 12px;
-      color: #4b5563;
-      font-weight: 500;
-    }
-
-    .multi-count strong {
-      color: #3b82f6;
-    }
-
-    .multi-search-btn {
-      font-size: 12px;
-      padding: 6px 16px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-
-    .multi-search-btn:hover {
-      opacity: 0.9;
-    }
-
-    .multi-search-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    /* Pro upgrade prompt for multi-search */
     .multi-pro-prompt {
       display: none;
-      padding: 12px;
-      margin-bottom: 12px;
-      background: #fef3c7;
-      border: 1px solid #fcd34d;
-      border-radius: 8px;
-      text-align: center;
+      padding: 8px 16px;
       font-size: 12px;
-      color: #92400e;
+      color: var(--pro-ink);
+      background: var(--pro-bg);
+      border-radius: 8px;
+      margin: 0 16px 8px;
+      text-align: center;
     }
+    .multi-pro-prompt.visible { display: block; }
+    .multi-pro-prompt a { color: var(--accent); font-weight: 600; }
 
-    .multi-pro-prompt.visible {
-      display: block;
-    }
-
-    .multi-pro-prompt a {
-      color: #3b82f6;
-      font-weight: 600;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-
-    /* Footer */
+    /* ── Footer ── */
     .footer {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-top: 12px;
-      padding-top: 10px;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-
-    .hint {
-      line-height: 1.4;
-    }
-
-    .hint kbd {
-      padding: 2px 6px;
-      border: 1px solid #d1d5db;
-      border-radius: 4px;
-      background: #f9fafb;
-      font-size: 11px;
-      font-family: inherit;
-    }
-
-    .upgrade-link {
-      font-size: 12px;
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 500;
-      padding: 4px 10px;
-      border: 1px solid #3b82f6;
-      border-radius: 6px;
-      transition: all 0.15s;
-    }
-
-    .upgrade-link:hover {
-      background: #3b82f6;
-      color: #ffffff;
-      text-decoration: none;
-    }
-
-    .upgrade-link.pro-active {
-      color: #10b981;
-      border-color: #10b981;
-    }
-
-    .upgrade-link.pro-active:hover {
-      background: #10b981;
-      color: #ffffff;
-    }
-
-    .empty-state {
-      grid-column: 1 / -1;
-      padding: 24px;
-      text-align: center;
-      color: #6b7280;
-      font-size: 13px;
-    }
-
-    /* Unlock banner for free users */
-    .unlock-banner {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 8px 16px 12px;
       gap: 8px;
-      padding: 10px 12px;
+      border-top: 1px solid var(--rule);
       margin-top: 4px;
-      background: linear-gradient(135deg, #eff6ff, #f5f3ff);
-      border: 1px dashed #93c5fd;
-      border-radius: 8px;
-      cursor: default;
     }
-
-    .unlock-icon {
-      font-size: 14px;
+    .footer .footer-btn {
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: var(--btn-bg);
+      color: var(--ink);
+      transition: background 0.15s;
     }
-
-    .unlock-text {
-      font-size: 12px;
-      color: #4b5563;
-      font-weight: 500;
+    .footer .footer-btn:hover { background: var(--btn-hover); }
+    .footer .footer-btn.active {
+      background: var(--accent);
+      color: #fff;
     }
-
-    .unlock-link {
-      font-size: 12px;
-      color: #3b82f6;
+    .footer .pro-link {
+      font-size: 11px;
+      color: var(--pro-ink);
       font-weight: 600;
       text-decoration: none;
-      cursor: pointer;
-      transition: color 0.15s;
+      margin-left: auto;
+    }
+    .footer .pro-link.pro-active {
+      color: var(--accent2);
     }
 
-    .unlock-link:hover {
-      color: #1d4ed8;
-      text-decoration: underline;
-    }
+    /* ── Engine Color Icons ── */
+    .ei-google { background: var(--icon-google); }
+    .ei-bing { background: var(--icon-bing); }
+    .ei-duckduckgo { background: var(--icon-duckduckgo); }
+    .ei-github { background: var(--icon-github); }
+    .ei-reddit { background: var(--icon-reddit); }
+    .ei-wikipedia { background: var(--icon-wikipedia); }
+    .ei-amazon { background: var(--icon-amazon); }
+    .ei-youtube { background: var(--icon-youtube); }
+    .ei-x { background: var(--icon-x); }
+    .ei-ebay { background: var(--icon-ebay); }
+    .ei-stackoverflow { background: var(--icon-stackoverflow); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div class="title">SearchDash</div>
-      <div class="header-actions">
-        <button class="multi-toggle" id="multiToggle" title="Multi-Search: Select multiple engines to search at once">⊞ Multi</button>
-        <a class="open-settings" id="openSettings">⚙️</a>
-      </div>
-    </div>
+  <div class="header">
+    <span class="logo">SearchDash</span>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="darkToggle" title="Toggle dark mode">🌙</button>
+    <a class="pro-badge" id="proBadge" href="#" title="Upgrade">Free</a>
+  </div>
 
-    <div class="multi-pro-prompt" id="multiProPrompt">
-      Multi-Search is a <strong>Pro</strong> feature. <a id="multiProLink">Upgrade now →</a>
-    </div>
+  <div class="search-area">
+    <input type="text" class="search-input" id="searchInput" placeholder="Type to search..." autofocus>
+  </div>
 
-    <div class="multi-action-bar" id="multiActionBar">
-      <span class="multi-count" id="multiCount"><strong>0</strong> selected</span>
-      <button class="multi-search-btn" id="multiSearchBtn" disabled>Search Selected</button>
-    </div>
+  <div class="tabs" id="categoryTabs"></div>
 
-    <div class="selection-area">
-      <div class="selection-label">Selected Text</div>
-      <textarea id="selectionText" placeholder="Select text on page, or type query here..."></textarea>
-    </div>
+  <div class="multi-pro-prompt" id="multiProPrompt">
+    Multi-Search is a Pro feature. <a href="#" id="multiProLink">Upgrade now</a>
+  </div>
 
-    <div class="engine-grid" id="engineGrid">
-      <!-- Search engine buttons will be generated by JS -->
-    </div>
+  <div class="engine-grid" id="engineGrid"></div>
 
-    <div class="footer">
-      <div class="hint">
-        Shortcut: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd>
-      </div>
-      <a id="upgradeBtn" class="upgrade-link" href="#">Upgrade to Pro</a>
-    </div>
+  <div class="action-bar" id="multiActionBar">
+    <span class="multi-count" id="multiCount">0 engines selected</span>
+    <button class="search-btn" id="multiSearchBtn">Search All</button>
+  </div>
+
+  <div class="footer">
+    <button class="footer-btn" id="multiToggle">Multi-Search</button>
+    <button class="footer-btn" id="openSettings">Settings</button>
+    <a class="pro-link" id="upgradeBtn" href="#">Upgrade</a>
   </div>
 
   <script src="popup.js"></script>
