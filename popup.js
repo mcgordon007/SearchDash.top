@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const upgradeBtn = document.getElementById('upgradeBtn');
   const proBadge = document.getElementById('proBadge');
   const darkToggle = document.getElementById('darkToggle');
+  const tabsScroll = document.getElementById('tabsScroll');
 
   const FREE_ENGINE_LIMIT = 5;
 
@@ -232,10 +233,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     multiMode = !multiMode;
     multiToggle.classList.toggle('active', multiMode);
     if (multiMode) {
+      tabsScroll.style.display = 'none';
       multiActionBar.classList.add('visible');
       multiProPrompt.classList.remove('visible');
       selectedEngines.clear();
     } else {
+      tabsScroll.style.display = '';
       multiActionBar.classList.remove('visible');
       selectedEngines.clear();
     }
