@@ -802,9 +802,16 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   }
 
   if (details.reason === 'update') {
-    // Reset engines to new defaults on update (new free/pro tier)
-    await saveEngines(DEFAULT_ENGINES);
-    console.log('Search engines updated to new defaults');
+    // Merge new engines from defaults without overwriting user's enabled state
+    const existingEngines = await getEngines();
+    const existingIds = new Map(existingEngines.map(e => [e.id, e]));
+    const merged = DEFAULT_ENGINES.map(def => {
+      // Keep user's existing engine (preserves enabled state), or use default for new engines
+      const existing = existingIds.get(def.id);
+      return existing || { ...def };
+    });
+    await saveEngines(merged);
+    console.log('Search engines updated — preserved existing settings');
   }
 
   await rebuildContextMenus();
