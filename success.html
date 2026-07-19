@@ -20,7 +20,7 @@
       background: #ffffff;
       border-radius: 16px;
       padding: 48px 40px;
-      max-width: 460px;
+      max-width: 420px;
       width: 90%;
       text-align: center;
       box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -43,10 +43,10 @@
       fill: none;
     }
     h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
-    .status { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+    .status { font-size: 14px; color: #64748b; margin-bottom: 24px; }
     .status.success { color: #10b981; font-weight: 600; }
     .status.error { color: #ef4444; font-weight: 600; }
-    .info { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
+    .info { font-size: 13px; color: #94a3b8; }
     .spinner {
       display: inline-block;
       width: 20px;
@@ -59,63 +59,6 @@
       margin-right: 8px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .license-box {
-      display: none;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 10px;
-      padding: 16px;
-      margin-top: 8px;
-      text-align: left;
-    }
-    .license-box.visible { display: block; }
-    .license-box .label {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #16a34a;
-      margin-bottom: 8px;
-    }
-    .license-box .key-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .license-box .key-text {
-      flex: 1;
-      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-      font-size: 13px;
-      color: #1e293b;
-      background: #ffffff;
-      border: 1px solid #d1fae5;
-      border-radius: 6px;
-      padding: 8px 12px;
-      word-break: break-all;
-      user-select: all;
-    }
-    .license-box .copy-btn {
-      flex-shrink: 0;
-      padding: 8px 14px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #ffffff;
-      background: #16a34a;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .license-box .copy-btn:hover { background: #15803d; }
-    .license-box .copy-btn.copied { background: #059669; }
-    .license-box .hint {
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 10px;
-      line-height: 1.5;
-    }
   </style>
 </head>
 <body>
@@ -130,98 +73,38 @@
     <p class="info" id="infoMsg">
       SearchDash will activate automatically.
     </p>
-
-    <div class="license-box" id="licenseBox">
-      <div class="label" id="licenseLabel">Your License Key</div>
-      <div class="key-row">
-        <span class="key-text" id="licenseKeyText"></span>
-        <button class="copy-btn" id="copyBtn">Copy</button>
-      </div>
-      <p class="hint" id="licenseHint"></p>
-    </div>
   </div>
 
   <script>
     (function() {
-      var statusEl = document.getElementById('statusMsg');
-      var infoEl = document.getElementById('infoMsg');
-      var licenseBox = document.getElementById('licenseBox');
-      var licenseLabel = document.getElementById('licenseLabel');
-      var licenseKeyText = document.getElementById('licenseKeyText');
-      var licenseHint = document.getElementById('licenseHint');
-      var copyBtn = document.getElementById('copyBtn');
+      const statusEl = document.getElementById('statusMsg');
+      const infoEl = document.getElementById('infoMsg');
 
-      var params = new URLSearchParams(window.location.search);
+      // Parse query params from Creem redirect
+      const params = new URLSearchParams(window.location.search);
+      const checkoutId = params.get('checkout_id');
+      const orderId = params.get('order_id');
+      const customerId = params.get('customer_id');
+      const productId = params.get('product_id');
 
-      var checkoutId = params.get('checkout_id')
-        || params.get('checkout')
-        || params.get('checkoutId')
-        || params.get('id')
-        || '';
-
-      var orderId = params.get('order_id')
-        || params.get('order')
-        || params.get('orderId')
-        || '';
-
-      function showLicenseKey(key, isSuccess) {
-        licenseKeyText.textContent = key;
-        licenseBox.classList.add('visible');
-        if (isSuccess) {
-          licenseLabel.textContent = 'Your License Key';
-          licenseHint.textContent = 'Save this key for your records. You can use it to re-activate SearchDash Pro on any device.';
-        } else {
-          licenseLabel.textContent = 'Your License Key';
-          licenseHint.innerHTML = 'Copy this key and paste it into the SearchDash extension <strong>Purchase</strong> page to activate Pro manually.';
-        }
-      }
-
-      copyBtn.addEventListener('click', function() {
-        var key = licenseKeyText.textContent;
-        if (!key) return;
-        navigator.clipboard.writeText(key).then(function() {
-          copyBtn.textContent = 'Copied!';
-          copyBtn.classList.add('copied');
-          setTimeout(function() {
-            copyBtn.textContent = 'Copy';
-            copyBtn.classList.remove('copied');
-          }, 2000);
-        }).catch(function() {
-          var range = document.createRange();
-          range.selectNode(licenseKeyText);
-          window.getSelection().removeAllRanges();
-          window.getSelection().addRange(range);
-          copyBtn.textContent = 'Copied!';
-          copyBtn.classList.add('copied');
-          setTimeout(function() {
-            copyBtn.textContent = 'Copy';
-            copyBtn.classList.remove('copied');
-          }, 2000);
-        });
-      });
-
-      if (!checkoutId) {
+      if (!checkoutId || !orderId) {
         statusEl.className = 'status error';
-        statusEl.textContent = 'Missing checkout information.';
-        infoEl.innerHTML = 'The payment was successful but we could not identify your order. Please find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a> and activate it manually in the SearchDash extension.';
+        statusEl.textContent = 'Missing payment information.';
+        infoEl.textContent = 'Please check your Creem Dashboard for the license key and activate it manually in the SearchDash extension.';
         return;
       }
 
+      // Try to send activation data to the SearchDash extension
       // NOTE: This ID changes after Chrome Web Store publishing. Update it then.
-      var extensionId = 'mpjpfdlbhfcejfmaafccigkhcdfclfoi';
+      const extensionId = 'ambflabphmejfgjpjooppajeihickmie';
 
-      function tryActivate() {
-        if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendMessage) {
-          statusEl.className = 'status success';
-          statusEl.textContent = 'Payment confirmed!';
-          infoEl.innerHTML = 'Open the SearchDash extension <strong>Purchase</strong> page and click "Check Payment" to activate.<br><br>Or find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
-          return;
-        }
-
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
         chrome.runtime.sendMessage(extensionId, {
           type: 'paymentSuccess',
           checkoutId: checkoutId,
-          orderId: orderId || undefined
+          orderId: orderId,
+          customerId: customerId,
+          productId: productId
         }, function(response) {
           if (chrome.runtime.lastError) {
             statusEl.className = 'status error';
@@ -234,24 +117,18 @@
             statusEl.className = 'status success';
             statusEl.textContent = 'License activated! All Pro features unlocked.';
             infoEl.textContent = 'You can close this page and start using SearchDash Pro.';
-            if (response.licenseKey) {
-              showLicenseKey(response.licenseKey, true);
-            }
           } else {
             statusEl.className = 'status error';
             statusEl.textContent = 'Activation failed.';
-            infoEl.textContent = 'Don\'t worry — you can still activate manually.';
-
-            if (response && response.licenseKey) {
-              showLicenseKey(response.licenseKey, false);
-            } else {
-              infoEl.innerHTML = 'Please open the SearchDash extension and activate your license manually.<br><br>Find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
-            }
+            infoEl.innerHTML = 'Please open the SearchDash extension and activate your license manually.<br><br>Find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
           }
         });
+      } else {
+        // Not running in Chrome extension context
+        statusEl.className = 'status success';
+        statusEl.textContent = 'Payment confirmed!';
+        infoEl.innerHTML = 'Open the SearchDash extension purchase page and click "Check Payment" to activate.<br><br>Or find your license key in the <a href="https://creem.io/dashboard" target="_blank" style="color:#3b82f6;">Creem Dashboard</a>.';
       }
-
-      tryActivate();
     })();
   </script>
 </body>
